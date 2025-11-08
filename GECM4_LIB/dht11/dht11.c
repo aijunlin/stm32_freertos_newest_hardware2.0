@@ -97,13 +97,13 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 	DHT11_OUT = 0;
 	
 	// 3、至少延时18ms以上
-	delay_ms(20);
+	Delay_ms(20);
 	
 	// 4、将PG9引脚设置为高电平									// 坤坤：收到，方老板，我马上搬砖
 	DHT11_OUT = 1;
 	
 	// 5、延时20-40us
-	delay_us(30);
+	Delay_us(30);
 	
 	// 二、DHT11模块发送响应信号给单片机
 	// 1、将PG9引脚设置为输入模式
@@ -114,7 +114,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 	while( DHT11_IN == 1)
 	{
 		t_count++;			// 通过计数，知道其是否超时(4ms)
-		delay_us(1);
+		Delay_us(1);
 		if(t_count > 4000)
 		{
 			return -1;
@@ -126,7 +126,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 	while( DHT11_IN == 0)
 	{
 		t_count++;			
-		delay_us(1);
+		Delay_us(1);
 		if(t_count > 100)
 		{
 			return -2;
@@ -138,7 +138,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 	while( DHT11_IN == 1)
 	{
 		t_count++;			
-		delay_us(1);
+		Delay_us(1);
 		if(t_count > 100)
 		{
 			return -3;
@@ -157,7 +157,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 			while( DHT11_IN == 0)
 			{
 				t_count++;			
-				delay_us(1);
+				Delay_us(1);
 				if(t_count > 60)
 				{
 					return -4;
@@ -165,7 +165,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 			}
 			
 			// b、开始延时一段时间(40us)
-			delay_us(40);
+			Delay_us(40);
 			
 			// c、判断引脚是否为高电平，是的话进行移位
 			if(DHT11_IN == 1)
@@ -178,7 +178,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 				while( DHT11_IN == 1)
 				{
 					t_count++;			
-					delay_us(1);
+					Delay_us(1);
 					if(t_count > 40)
 					{
 						return -5;
@@ -197,7 +197,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 			return -6;
 
 	// 四、通信结束												// 坤坤没有事干了，暂且休息
-	delay_us(100);
+	Delay_us(100);
 
 	return 0;
 }

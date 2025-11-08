@@ -49,6 +49,9 @@
 ..\obj\main.o: ..\GECM4_LIB\key\key.h
 ..\obj\main.o: ..\GECM4_LIB\buzzer\buzzer.h
 ..\obj\main.o: ..\SYSTEM\uart\uart.h
+..\obj\main.o: ..\GECM4_LIB\OLED.h
+..\obj\main.o: ..\GECM4_LIB\OLED_Data.h
+..\obj\main.o: ..\GECM4_LIB\sys.h
 ..\obj\main.o: ..\SYSTEM\delay\delay.h
 ..\obj\main.o: ..\FreeRTOS\include\FreeRTOS.h
 ..\obj\main.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\stddef.h
@@ -60,6 +63,4 @@
 ..\obj\main.o: ..\FreeRTOS\include\mpu_wrappers.h
 ..\obj\main.o: ..\FreeRTOS\include\task.h
 ..\obj\main.o: ..\FreeRTOS\include\list.h
-..\obj\main.o: ..\GECM4_LIB\OLED.h
-..\obj\main.o: ..\GECM4_LIB\OLED_Data.h
-..\obj\main.o: ..\GECM4_LIB\sys.h
+..\obj\main.o: ..\GECM4_LIB\DHT11.h

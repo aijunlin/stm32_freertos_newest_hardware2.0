@@ -327,8 +327,8 @@
             <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
-            <uGnu>0</uGnu>
+            <uC99>1</uC99>
+            <uGnu>1</uGnu>
             <useXO>0</useXO>
             <v6Lang>3</v6Lang>
             <v6LangP>3</v6LangP>
@@ -444,6 +444,11 @@
               <FileName>OLED.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\GECM4_LIB\OLED.c</FilePath>
+            </File>
+            <File>
+              <FileName>DHT11.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GECM4_LIB\DHT11.c</FilePath>
             </File>
           </Files>
         </Group>

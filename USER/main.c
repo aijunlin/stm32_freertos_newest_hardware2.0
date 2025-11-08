@@ -32,25 +32,27 @@
 
 
 // 任务控制块指针(相当于Linux的线程标识符)
-static TaskHandle_t app_task1_handle;
-static TaskHandle_t app_task2_handle;
+static TaskHandle_t OLED_Task_handle;
+static TaskHandle_t DHT11_Task_handle;
 
 // 任务函数声明
 static void OLED_Task( void * pvParameters );
-static void app_task2( void * pvParameters );
+static void DHT11_Task( void * pvParameters );
+
+
 
 
 void Hardware_Init(void)
 {
 
-	UART1_Init(115200);		
+	Uart_Init();
+	Uart2_Init();
 	LED_Init();
 	KEY_Init();
 	BUZZER_Init();
-	DELAY_MyNms(1000);
+
 	OLED_Init();
-
-
+	DHT11_Init();
 
 
 }
@@ -59,10 +61,12 @@ void Hardware_Init(void)
 // 主函数
 int main(void)
 {
+
+	Hardware_Init();
 	// (1)、相关变量区域
 	BaseType_t xReturned;	// 任务创建函数的返回值
 	
-	Hardware_Init();
+
 	
 	// (3)、RTOS任务的创建并开启调度				 
 	// 1、创建任务，并存储其标识符
@@ -72,27 +76,27 @@ int main(void)
 								512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
 								NULL,    		 	// 传递给任务的参数
 								5,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-								&app_task1_handle 	// 任务控制块指针
+								&OLED_Task_handle 	// 任务控制块指针
 						    );  
 
     if( xReturned == pdPASS )						// 创建任务成功
     {
-		printf("app_task1 create!\r\n");
+		printf("OLED_Task create!\r\n");
     }
 	
 	// 2、创建任务，并存储其标识符
     xReturned = xTaskCreate(
-								app_task2,       	// 任务接口函数
-								"app_task2",        // 任务名字
+								DHT11_Task,       	// 任务接口函数
+								"DHT11_Task",        // 任务名字
 								512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
 								NULL,    		 	// 传递给任务的参数
-								5,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-								&app_task2_handle 	// 任务控制块指针
+								6,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+								&DHT11_Task_handle 	// 任务控制块指针
 						    );  
 
     if( xReturned == pdPASS )						// 创建任务成功
     {
-		printf("app_task2 create!\r\n");
+		printf("DHT11_Task create!\r\n");
     }
 	
 
@@ -114,8 +118,14 @@ static void OLED_Task( void * pvParameters)
 	while (1)
 	{
 
-		OLED_ShowNum(0, 16,2, 5, OLED_8X16); // 使用memcmp接口对比函数
-		OLED_Update(); // 测试页面用例
+		
+		printf("OLED_Task run!\r\n");
+		// OLED_ShowNum(0, 16, esp8266.Esp8266_Report_Flag1, 5, OLED_8X16); // 使用memcmp接口对比函数
+		OLED_ShowNum(32, 16, DHT11_Data[0], 2, OLED_8X16);
+		OLED_ShowNum(64, 16, DHT11_Data[2], 2, OLED_8X16);
+		// OLED_ShowString_ascii(0,32,data,OLED_8X16);//显示接受到的数据
+		OLED_Update();
+		vTaskDelay(1);
 
 	}
 }
@@ -127,14 +137,15 @@ static void OLED_Task( void * pvParameters)
   * @param  None
   * @retval None
   */
-static void app_task2( void * pvParameters )
+static void DHT11_Task(void *pvParameters)
 {
 	while (1)
 	{
-		
-
-
-
+		DHT11_Data_Get();
+		printf("DHT11_Task run!\r\n");
+		printf("huminity %d\r\n",DHT11_Data[0]);
+		printf("temperature %d\r\n",DHT11_Data[2]);
+		vTaskDelay( pdMS_TO_TICKS( 6000 ) ); // 延时6000ms
 
 	}
 }

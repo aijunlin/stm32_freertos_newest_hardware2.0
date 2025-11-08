@@ -2,6 +2,8 @@
     "files.associations": {
         "main.h": "c",
         "delay.h": "c",
-        "oled.h": "c"
+        "oled.h": "c",
+        "dht11.h": "c",
+        "uart.h": "c"
     }
 }

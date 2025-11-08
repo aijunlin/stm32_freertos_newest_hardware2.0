@@ -10,6 +10,7 @@
 "..\obj\key.o"
 "..\obj\oled_data.o"
 "..\obj\oled.o"
+"..\obj\dht11.o"
 "..\obj\delay.o"
 "..\obj\uart.o"
 "..\obj\misc.o"

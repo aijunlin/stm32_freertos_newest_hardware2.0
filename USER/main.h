@@ -34,6 +34,7 @@
 #include "uart.h"
 #include "delay.h"
 #include "OLED.h"
+#include "DHT11.h"
 
 
 // 二、宏定义(函数、变量、常量)

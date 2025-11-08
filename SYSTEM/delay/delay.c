@@ -1,10 +1,12 @@
 #include "delay.h"
 
 
-static uint8_t  sysclk_nus      = 0;
-static uint32_t sysclk_nms      = 0;
-static uint8_t  sysclk_clk_flag = 0;
+// static uint8_t  sysclk_nus      = 0;
+// static uint32_t sysclk_nms      = 0;
+// static uint8_t  sysclk_clk_flag = 0;
 
+static u8  fac_us=0;			// us延时倍乘数			   
+static u16 fac_ms=0;			// ms延时倍乘数,在os下,代表每个节拍的ms数
 
 /**
   * @brief  自写延时函数
@@ -23,34 +25,25 @@ void DELAY_MyNms(uint16_t nms)
 }
 
 
-/**
-  * @brief  系统定时器初始化
-  * @note   选择时钟源(168MHZ(AHB或HCLK)、21MHZ(8分频的AHB或HCLK))
-  * @param  sysclk：此处填写168或21,选择选择时钟源，取决于你的需要
-  * @retval 成功：返回0
-  *         失败：返回-1
-  */
-int8_t DELAY_SysTickInit(uint8_t sysclk)
+//初始化延迟函数
+//SYSTICK的时钟固定为AHB时钟，基础例程里面SYSTICK时钟频率为AHB/8
+//这里为了兼容FreeRTOS，所以将SYSTICK的时钟频率改为AHB的频率！
+//SYSCLK:系统时钟频率
+
+void SysTick_Init(u8 SYSCLK)
 {
-	if(sysclk == 168)
-	{
-		sysclk_nus      = 168;	
-		sysclk_nms      = 168000;
-		sysclk_clk_flag = 5;			// 选择HCLK时钟(内核时钟)：168MHZ
-	}
-	else if(sysclk == 21)
-	{
-		sysclk_nus      = 21;	
-		sysclk_nms      = 21000;
-		sysclk_clk_flag = 1;			// 选择8分频HCLK时钟(外部参考时钟)：21MHZ
-	}
-	else
-	{
-		return -1;
-	}
-	
-	return 0;
-}
+	u32 reload;
+ 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);   //频率168MHZ
+	fac_us=SYSCLK;							//不论是否使用OS,fac_us都需要使用
+	reload=SYSCLK;							//每秒钟的计数次数 单位为M	   
+	reload*=1000000/configTICK_RATE_HZ;		//根据delay_ostickspersec设定溢出时间
+                                            //reload为24位寄存器,最大值:16777216,在168M下,约合0.0998s左右	
+	fac_ms=1000/configTICK_RATE_HZ;			//代表OS可以延时的最少单位	   
+	SysTick->CTRL|=SysTick_CTRL_TICKINT_Msk;//开启SYSTICK中断
+	SysTick->LOAD=reload; 					//每1/configTICK_RATE_HZ断一次	
+	SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk; //开启SYSTICK     
+}								    
+
 
 /**
   * @brief  精准延时nus
@@ -59,35 +52,45 @@ int8_t DELAY_SysTickInit(uint8_t sysclk)
   * @retval 成功：返回0
   *         失败：返回非0
   */
-int8_t Delay_us(uint32_t nus)
+void Delay_us(uint32_t nus)
 {
-	uint32_t t    = nus;
-	uint32_t temp = 0;
+uint32_t told,tnow,tcnt=0;
+	uint32_t temp=0;
+	uint32_t reload=SysTick->LOAD;					//系统定时器的重载值
+	uint32_t ticks=nus*(SystemCoreClock/1000000);	//总共要等待的滴答数目
+	told=SysTick->VAL;        						//刚进入时的计数器值
 	
-	while(t--)
+	//挂起所有任务[可选]
+	vTaskSuspendAll();
+	
+	while(1)
 	{
-		SysTick->CTRL = 0;
-		SysTick->LOAD = sysclk_nus-1;   
-		SysTick->VAL  = 0;
-		SysTick->CTRL = sysclk_clk_flag; 
+		//获取当前计数值
+		tnow=SysTick->VAL;					
 		
-		while(1)
-		{
-			temp = SysTick->CTRL;
+		if(tnow!=told)
+		{	    
+			//SYSTICK是一个递减的计数器
+			if(tnow<told)
+				tcnt+=told-tnow;			
+			else 
+				tcnt+=reload-tnow+told;
 			
-			// 检测COUNTFLAG标志位
-			if(temp & 0x00010000)
-				break;
+			told=tnow;
 			
-			// 检查系统定时器是否意外关闭
-			if( (temp & 0x1) == 0)
-				return -1;	
-		}
+			//时间超过/等于要延迟的时间,则退出.
+			if(tcnt>=ticks)
+				break;						
+		}  
 		
-		SysTick->CTRL = 0;
+		temp=SysTick->CTRL;
+		
+		//若定时器中途关闭了，跳出循环
+		if((temp & 0x01)==0)			
+			break;
 	}
-	
-	return 0;	
+	//恢复所有任务[可选]
+	xTaskResumeAll();
 	
 }
 
@@ -98,40 +101,22 @@ int8_t Delay_us(uint32_t nus)
   * @retval 成功：返回0
   *         失败：返回非0
   */
-int8_t delay_ms(uint32_t nms)
+void Delay_ms(uint32_t nms)
 {
-	uint32_t t    = nms;
-	uint32_t temp = 0;
-	
-	while(t--)
-	{
-		SysTick->CTRL = 0;
-		SysTick->LOAD = sysclk_nms-1;
-		SysTick->VAL  = 0;
-		SysTick->CTRL = sysclk_clk_flag; 
-		
-		while(1)
-		{
-			temp = SysTick->CTRL;
-			
-			// 检测COUNTFLAG标志位
-			if(temp & 0x00010000)
-				break;
-			
-			// 检查系统定时器是否意外关闭
-			if( (temp & 0x1) == 0)
-				return -1;	
+		if(xTaskGetSchedulerState()!=taskSCHEDULER_NOT_STARTED)//系统已经运行
+	{		
+		if(nms>=fac_ms)						//延时的时间大于OS的最少时间周期 
+		{ 
+   			vTaskDelay(nms/fac_ms);	 		//FreeRTOS延时 
 		}
-		
-		SysTick->CTRL = 0;
+		nms%=fac_ms;						//OS已经无法提供这么小的延时了,采用普通方式延时    
 	}
-	
-	return 0;	
+	Delay_us((u32)(nms*1000));				//普通方式延时
 	
 }
 
 
-void delay_ms_rtos(uint32_t nms)
+void Delay_ms_rtos(uint32_t nms)
 {
     // 所有变量声明必须放在函数开始处
     TickType_t xTicksToDelay;

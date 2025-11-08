@@ -1,4 +1,8 @@
-Load "..\\OBJ\\project.axf" 
-Internal DLL Error
-Error: Flash Download failed  -  Target DLL has been cancelled
-Flash Load finished at 20:55:46
+*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'F:\app\keil\ARM\ARMCOMPLIER506\Bin'
+Build target 'STM32_PROJECT'
+compiling main.c...
+linking...
+Program Size: Code=16300 RO-data=4508 RW-data=196 ZI-data=79468  
+FromELF: creating hex file...
+"..\OBJ\project.axf" - 0 Error(s), 0 Warning(s).
+Build Time Elapsed:  00:00:02

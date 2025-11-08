@@ -40,10 +40,10 @@
 extern void DELAY_MyNms(uint16_t nms);
 
 // (2)、精准延时
-extern int8_t DELAY_SysTickInit(uint8_t sysclk);
-extern int8_t Delay_us(uint32_t nus);
-extern int8_t delay_ms(uint32_t nms);
-void delay_ms_rtos(uint32_t nms);
+void SysTick_Init(u8 SYSCLK);
+void Delay_us(uint32_t nus);
+void Delay_ms(uint32_t nms);
+void Delay_ms_rtos(uint32_t nms);
 
 // 六、静态变量、函数定义
 
