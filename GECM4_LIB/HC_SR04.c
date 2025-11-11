@@ -23,6 +23,10 @@ volatile uint8_t Dis_flag = 0;
 uint8_t HC_SR04_start_flag = 0;
 static uint8_t cnt = 0;   //静态变量函数退出后值不会变
 
+// SemaphoreHandle_t xHCSR04Semaphore = NULL;
+
+
+
 /**
  * @brief  hc_sr04初始化函数
  * @param  None
@@ -125,77 +129,111 @@ void HC_SR04_Init(void)
  * @retval None
  */
 
+// 添加宏定义
+#define HC_SR04_TIMEOUT_US       60000   // 60ms超时（约10米）
+#define HC_SR04_MIN_DISTANCE_CM   2       // 最小有效距离
+#define HC_SR04_MAX_DISTANCE_CM   400     // 最大有效距离
+#define HC_SR04_ERROR_VALUE       0xFFFFFFFF  // 错误值
+
 uint32_t HC_SR04_Get_Distance(void)
 { 
-    uint32_t pulse_time_us = 0;
-    uint32_t distance_cm = 0;
-    uint32_t timeout = 0xFFFFFF; 
+    uint32_t pulse_time_us  = 0;
+    uint32_t distance_cm    = 0;
+    uint32_t start_time     = 0;
 
-    // 1. 重置标志，并确保 Trig 引脚先拉低 (Trig 脉冲是高电平)
+    // 1. 初始化状态
     Dis_flag = 0;
+    Dis_up   = 0;
+    Dis_down = 0;
     PDout(7) = 0;
-    Delay_us(5); // 确保低电平间隔
+    Delay_us(5);
 
-    // 2. 发送 Trig 脉冲 >= 10us
+    // 2. 发送触发脉冲
     PDout(7) = 1;
     Delay_us(15);
-    PDout(7) = 0; // **必须将 Trig 脉冲拉低**
+    PDout(7) = 0;
 
-    // 3. 等待 ISR (下降沿中断) 设置 Dis_flag
-    while ((Dis_flag == 0) && (timeout--)) 
-    {
-        // 等待捕获完成
+    // 3. 等待回波（带超时）
+    start_time = TIM8->CNT;
+    while (Dis_flag == 0) {
+        if ((TIM8->CNT - start_time) > HC_SR04_TIMEOUT_US) {
+            return HC_SR04_ERROR_VALUE; // 超时无回波
+        }
     }
 
-    // 4. 超时处理
-    if (Dis_flag == 0)
-    {
-        return 0; // 捕获失败，返回 0
-    }
-    
-    // 5. 计算时间差 (单位是 us，因为 T_count = 1us)
-    // 假设未发生溢出，直接相减
-    if (Dis_down >= Dis_up)
-    {
+    // 4. 处理定时器数据
+    if (Dis_down >= Dis_up) {
         pulse_time_us = Dis_down - Dis_up;
-    }
-    else
-    {
-        // 发生了定时器溢出，需要特殊处理，这里简化为返回 0
-        return 0; 
+    } else {
+        // 处理溢出
+        pulse_time_us = (0xFFFF - Dis_up) + Dis_down + 1;
     }
 
-    // 6. 计算距离 (D = t / 58.3)
-    // 采用除法：
-    // distance_cm = pulse_time_us / 58; 
-    
-    // 或者更精确的整数乘法： D = (t * 10) / 583
-    distance_cm = (pulse_time_us * 10) / 583;
+    // 5. 转换为距离
+    distance_cm = (pulse_time_us * 10 + 291) / 583; // 四舍五入
 
-    /* 测量周期建议60ms以上*/
+    // 6. 检查距离范围
+    if (distance_cm < HC_SR04_MIN_DISTANCE_CM || distance_cm > HC_SR04_MAX_DISTANCE_CM) {
+        return HC_SR04_ERROR_VALUE;
+    }
 
     return distance_cm;
 }
 
+/**
+ * @brief  带重试的距离获取
+ */
+uint32_t HC_SR04_Get_Distance_With_Retry(uint8_t max_retries)
+{
+    uint32_t distance = 0;
+    uint8_t retry_count = 0;
+    
+    for (retry_count = 0; retry_count < max_retries; retry_count++) {
+        distance = HC_SR04_Get_Distance();
+        
+        if (distance != HC_SR04_ERROR_VALUE) {
+            return distance;
+        }
+        
+        Delay_ms(30); // 重试间隔
+    }
+    
+    return HC_SR04_ERROR_VALUE;
+}
+
 void TIM8_CC_IRQHandler(void)
 {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-    //捕获上升沿的中断
+    // 捕获上升沿的中断
     if (TIM_GetITStatus(TIM8, TIM_IT_CC1) != RESET) 
     {
-        Dis_up = TIM_GetCapture1(TIM8);//读取cc1的值
+        Dis_up = TIM_GetCapture1(TIM8);
+        
+        // 清除中断标志
         TIM_ClearITPendingBit(TIM8, TIM_IT_CC1);
     }
 
-    //捕获下降沿的中断
+    // 捕获下降沿的中断
     if (TIM_GetITStatus(TIM8, TIM_IT_CC2) != RESET) 
     {
-        Dis_down = TIM_GetCapture2(TIM8);//读取cc2的值
-        Dis_flag = 1;//通知可以开始计算
+        Dis_down = TIM_GetCapture2(TIM8);
+        Dis_flag = 1; // 设置完成标志
+        
+
+        // 如果使用了FreeRTOS的信号量，可以在这里通知任务
+        // if (xHCSR04Semaphore != NULL)
+        // {
+        //     xSemaphoreGiveFromISR(xHCSR04Semaphore, &xHigherPriorityTaskWoken);
+        // }
+
+        // 清除中断标志
         TIM_ClearITPendingBit(TIM8, TIM_IT_CC2);
+        
     }
     
-
+    // 如果需要，进行任务切换
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 
@@ -209,6 +247,3 @@ void HC_SR04_Timer_Tick(void)
 	}
 
 }
-
-
-

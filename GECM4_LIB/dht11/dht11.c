@@ -1,5 +1,5 @@
 #include "dht11.h"
-#include "delay.h"
+
 
 
 /**
@@ -196,7 +196,7 @@ int8_t DHT11_GetData(uint8_t pbuf[5])
 	if( (check_num & 0xff)  != pbuf[4] )
 			return -6;
 
-	// 四、通信结束												// 坤坤没有事干了，暂且休息
+	// 四、通信结束										
 	Delay_us(100);
 
 	return 0;

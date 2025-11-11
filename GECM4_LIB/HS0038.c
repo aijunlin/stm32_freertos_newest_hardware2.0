@@ -22,6 +22,9 @@ uint8_t HS0038_Start_Flag = 0;
 
 uint8_t data_array[4] = {0};
 
+xSemaphoreHandle xIRSemaphore = NULL;
+
+
 /**
  * @brief  HS0038的初始化函数
  * @param  None
@@ -58,7 +61,7 @@ void HS_0038_Init(void)
 
     NVIC_InitStructure.NVIC_IRQChannel                   = EXTI9_5_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 2;
 
     NVIC_Init(&NVIC_InitStructure);
@@ -200,15 +203,24 @@ void HS0038_Readdata(void)
  */
 void EXTI9_5_IRQHandler(void)	
 {	
-	
+	// 1. 声明标志位，用于检查是否需要任务切换
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	if(EXTI_GetITStatus(EXTI_Line8) == SET)  				// 判断是否出发了外部中断0线
 	{
+		// EXTI_InitTypeDef EXTI_InitStruct;
+        // EXTI_InitStruct.EXTI_LineCmd = DISABLE; // 禁用 EXTI
+        // EXTI_Init(&EXTI_InitStruct);
+
+        // 给信号量发送信号
+      if (xIRSemaphore != NULL) {
+            xSemaphoreGiveFromISR(xIRSemaphore, &xHigherPriorityTaskWoken);
+        }
 		
-		HS0038_Readdata();
-		printf("receive data%X\r\n", data_array[2]);	// 经过测算，获取的地址码为0，所以可以不用
+		// printf("receive data%X\r\n", data_array[2]);	// 经过测算，获取的地址码为0，所以可以不用
 		
 		EXTI_ClearITPendingBit(EXTI_Line8);	  				// 清除外部中断0线的中断挂起标志位
 	}				
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 

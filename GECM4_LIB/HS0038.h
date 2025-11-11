@@ -25,6 +25,9 @@
 #include "sys.h"
 #include "delay.h"
 #include "stdio.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
 
 
@@ -37,7 +40,7 @@
 extern uint8_t HS0038_Start_Flag;
 
 extern uint8_t data_array[4];   //方便调试
-
+extern xSemaphoreHandle xIRSemaphore;
 /* Exported functions --------------------------------------------------------*/
 void HS_0038_Init(void);
 

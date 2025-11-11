@@ -1,5 +1,6 @@
-..\obj\dht11.o: ..\GECM4_LIB\DHT11.c
-..\obj\dht11.o: ..\GECM4_LIB\DHT11.h
+..\obj\dht11.o: ..\GECM4_LIB\dht11\dht11.c
+..\obj\dht11.o: ..\GECM4_LIB\dht11\dht11.h
+..\obj\dht11.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\stdio.h
 ..\obj\dht11.o: ..\USER\stm32f4xx.h
 ..\obj\dht11.o: ..\CORE\core_cm4.h
 ..\obj\dht11.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\stdint.h
@@ -35,16 +36,15 @@
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_dac.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_dcmi.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_fsmc.h
-..\obj\dht11.o: ..\GECM4_LIB\sys.h
-..\obj\dht11.o: ..\SYSTEM\delay\delay.h
 ..\obj\dht11.o: ..\USER\my_config.h
-..\obj\dht11.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\stdio.h
 ..\obj\dht11.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\string.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_dma2d.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_flash_ramfunc.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_fmc.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_ltdc.h
 ..\obj\dht11.o: ..\ST_LIB\inc\stm32f4xx_sai.h
+..\obj\dht11.o: ..\USER\my_reg.h
+..\obj\dht11.o: ..\SYSTEM\delay\delay.h
 ..\obj\dht11.o: ..\FreeRTOS\include\FreeRTOS.h
 ..\obj\dht11.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\stddef.h
 ..\obj\dht11.o: ..\FreeRTOS\include\FreeRTOSConfig.h

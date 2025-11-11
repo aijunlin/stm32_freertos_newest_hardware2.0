@@ -28,6 +28,8 @@
 #include "stm32f4xx.h"
 #include "my_config.h"
 #include "my_reg.h"
+#include "delay.h"
+
 
 // 二、宏定义(函数、变量、常量)
 #define DHT11_OUT PGout(9)
@@ -43,7 +45,6 @@ extern int8_t DHT11_SelectMode(GPIOMode_TypeDef GPIO_Mode);
 extern int8_t DHT11_GetData(uint8_t pbuf[5]);
 
 	
-
 // 六、静态变量、函数定义
 
 #endif /* __DHT11_H */

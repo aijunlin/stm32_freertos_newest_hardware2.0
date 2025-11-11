@@ -26,10 +26,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
-
 #include "sys.h"
-
 #include "delay.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
 
 
@@ -41,6 +42,8 @@
 /* Exported constants --------------------------------------------------------*/
 extern volatile uint32_t Dis;
 extern uint8_t HC_SR04_start_flag;
+
+// extern SemaphoreHandle_t xHCSR04Semaphore;
 
 
 /* Exported functions --------------------------------------------------------*/

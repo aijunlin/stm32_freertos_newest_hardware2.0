@@ -411,11 +411,11 @@ void esp8266_test_demo(void)
 		// 判断
 		if (MY_LIB_CmpArray((int8_t *)uart3_recvbuf, (int8_t *)"BUZZER_ON", 9) == 0)
 		{
-			Beep_Flag = 1;
+			// Beep_Flag = 1;
 		}
 		if (MY_LIB_CmpArray((int8_t *)uart3_recvbuf, (int8_t *)"BUZZER_OFF", 10) == 0)
 		{
-			Beep_Flag = 0;
+			// Beep_Flag = 0;
 		}
 
 		// 清空相关数据，方便下次接收
@@ -437,7 +437,7 @@ void esp8266_test_demo(void)
 void esp8266_DataReport(void)
 {
 	char data[64];
-	sprintf(data,"#chat stm32 huminity%d,temporture%d",DHT11_Data[0],DHT11_Data[2]);	//拼接温湿度数据进行发送  可以改成json发送
+	// sprintf(data,"#chat stm32 huminity%d,temporture%d",DHT11_Data[0],DHT11_Data[2]);	//拼接温湿度数据进行发送  可以改成json发送
 
 	ESP8266_SendMsg(data);
 

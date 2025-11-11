@@ -4,6 +4,15 @@
         "delay.h": "c",
         "oled.h": "c",
         "dht11.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "stdio.h": "c",
+        "my_reg.h": "c",
+        "my_config.h": "c",
+        "hc_sr04.h": "c",
+        "event_groups.h": "c",
+        "task.h": "c",
+        "semphr.h": "c",
+        "compare": "c",
+        "freertos.h": "c"
     }
 }

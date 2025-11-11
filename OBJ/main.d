@@ -63,4 +63,16 @@
 ..\obj\main.o: ..\FreeRTOS\include\mpu_wrappers.h
 ..\obj\main.o: ..\FreeRTOS\include\task.h
 ..\obj\main.o: ..\FreeRTOS\include\list.h
-..\obj\main.o: ..\GECM4_LIB\DHT11.h
+..\obj\main.o: ..\GECM4_LIB\dht11\dht11.h
+..\obj\main.o: ..\GECM4_LIB\HC_SR04.h
+..\obj\main.o: ..\FreeRTOS\include\semphr.h
+..\obj\main.o: ..\FreeRTOS\include\queue.h
+..\obj\main.o: ..\GECM4_LIB\esp8266.h
+..\obj\main.o: ..\GECM4_LIB\uart.h
+..\obj\main.o: ..\GECM4_LIB\key.h
+..\obj\main.o: ..\GECM4_LIB\key_timer.h
+..\obj\main.o: ..\GECM4_LIB\led.h
+..\obj\main.o: ..\GECM4_LIB\esp8266.h
+..\obj\main.o: ..\FreeRTOS\include\event_groups.h
+..\obj\main.o: ..\FreeRTOS\include\timers.h
+..\obj\main.o: ..\GECM4_LIB\HS0038.h
