@@ -13,6 +13,8 @@
         "task.h": "c",
         "semphr.h": "c",
         "compare": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "hs0038.h": "c",
+        "ws2812.h": "c"
     }
 }

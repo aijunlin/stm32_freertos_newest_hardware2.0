@@ -25,10 +25,7 @@
  *
  * 	V0.1.1  8-November-2025 完成了任务的调度测试，完成了oled dht11 hc-sr04 模块的引入和测试
  * 
- * 	V0.1.2  9-November-2025 完成了任务的调度测试，完成了esp8266模块的引入和测试
- * 
- * 
- * 
+ * 	V0.1.2  9-November-2025 完成了任务的调度测试，完成了esp8266模块的引入和测试 完成了hs0038模块的引入和测试
  * 
  * 
  ******************************************************************************
@@ -49,6 +46,8 @@ static TaskHandle_t DHT11_Task_handle;
 static TaskHandle_t HC_SR04_Task_handle;
 static TaskHandle_t ESP8266_Connect_Task_handle;
 static TaskHandle_t HS0038_Task_handle;
+static TaskHandle_t MIC_ADC_Task_handle;
+static TaskHandle_t ws2812_Task_handle;
 
 
 
@@ -58,6 +57,8 @@ static void DHT11_Task( void * pvParameters );
 static void HC_SR04_Task( void * pvParameters );
 static void ESP8266_Connect_Task( void * pvParameters );
 static void HS0038_Task( void * pvParameters );
+static void MIC_ADC_Task( void * pvParameters );
+static void ws2812_Task( void * pvParameters );
 
 
 
@@ -67,6 +68,14 @@ SemaphoreHandle_t xDHT11Mutex;
 
 uint8_t DHT11_Data[5] = {0};
 uint32_t distance;
+
+
+u8 g_data;
+u8 g_flag = 0, g_count = 0;
+u8 g_buffer[32] = {0};
+char g_rxbuffer[32] = {0};
+int Y_speed=10 ;
+
 
 void Hardware_Init(void)
 {
@@ -83,7 +92,8 @@ void Hardware_Init(void)
 	HC_SR04_Init();
 	Esp8266_Init(115200);
 	HS_0038_Init();
-
+    WS2812b_Configuration();
+	ADC1_Init();
 
 }
 
@@ -228,6 +238,47 @@ int main(void)
 		printf("HS0038_Task create failed!\r\n");
 		// 可以在这里处理创建失败的情况
 	}
+
+
+    // //3、创建任务，并存储其标识符
+	// xReturned = xTaskCreate(
+	// 						MIC_ADC_Task,		// 任务接口函数
+	// 						"MIC_ADC_Task",	   // 任务名字
+	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+	// 						NULL,			   // 传递给任务的参数
+	// 						0,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+	// 						&MIC_ADC_Task_handle // 任务控制块指针
+	// );
+
+	// if( xReturned == pdPASS )						// 创建任务成功
+    // {
+	// 	printf("MIC_ADC_Task create!\r\n");
+    // }	
+	// else
+	// {
+	// 	printf("MIC_ADC_Task create failed!\r\n");
+	// 	// 可以在这里处理创建失败的情况
+	// }
+
+        // 3、创建任务，并存储其标识符
+	xReturned = xTaskCreate(
+							ws2812_Task,		// 任务接口函数
+							"ws2812_Task",	   // 任务名字
+							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&ws2812_Task_handle // 任务控制块指针
+	);
+
+	if( xReturned == pdPASS )						// 创建任务成功
+    {
+		printf("ws2812_Task create!\r\n");
+    }	
+	else
+	{
+		printf("ws2812_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
 	
 	// (4)、开启任务调度(堵塞于此，让任务可以运行起来)
 	vTaskStartScheduler();			
@@ -306,7 +357,7 @@ static void HC_SR04_Task(void *pvParameters)
 
 
 /**
-  * @brief  任务4函数实现
+  * @brief  任务HS0038通信函数实现
   * @note   实现HS0038通信
   * @param  None
   * @retval None
@@ -315,18 +366,161 @@ static void HS0038_Task(void *pvParameters)
 {
     while (1)
     {
-        if (xSemaphoreTake(xIRSemaphore, portMAX_DELAY) == pdTRUE)
+        if (xSemaphoreTake(xIRSemaphore, portMAX_DELAY) == pdTRUE)      //16 c 18
         {
+
             // 安全地处理红外数据
             printf("HS0038_Start\r\n");
             HS0038_Readdata();
             printf("HS0038_Readdata: %X\r\n", data_array[2]);
+            if (data_array[2] == 0x16)
+            {
+                 strcpy(g_rxbuffer, "HCL41");
+            }
+            if (data_array[2] == 0xC)
+            {
+                 strcpy(g_rxbuffer, "HCL21");
+            }
+            if (data_array[2] == 0x18)
+            {
+                 strcpy(g_rxbuffer, "HCL31");
+            }
+            
         }
         xSemaphoreTake(xIRSemaphore, pdMS_TO_TICKS(100));
         vTaskDelay(pdMS_TO_TICKS(3000)); // 延时3000ms
     }
 }
 
+/**
+  * @brief  任务麦克风采集ADC数据函数实现
+  * @note   实现麦克风采集ADC数据
+  * @param  None
+  * @retval None
+  */
+static void MIC_ADC_Task(void *pvParameters)
+{
+    while (1)
+    {
+        uint16_t adc_val = ADC1_Convert(ADC_Channel_5);
+        uint16_t adc_val1 = ADC1_Convert(ADC_Channel_6);
+        printf("MIC_ADC_Task: %d\r\n", adc_val);
+        printf("ADC_Task: %d\r\n", adc_val1);
+        vTaskDelay(pdMS_TO_TICKS(1000)); // 延时3000ms
+    }
+}
+
+/**
+  * @brief  任务ws2812控制函数实现
+  * @note   实现ws2812控制
+  * @param  None
+  * @retval None
+  */
+static void ws2812_Task(void *pvParameters)
+{
+
+    while (1)
+    {
+        if (strcmp(g_rxbuffer, "HCL41") == 0)
+        {
+            printf("Effect: Color Wipe (Red)\r\n");
+            ws_effect_color_wipe(YRED, 50); // 红色流水灯
+            vTaskDelay(pdMS_TO_TICKS(500));
+            ws_effect_color_wipe(YBLACK, 50); // 熄灭
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+        if (strcmp(g_rxbuffer, "HCL21") == 0)
+        {
+            printf("Effect: Theater Chase (Blue)\r\n");
+            ws_effect_theater_chase(YBLUE, 100); // 蓝色跑马灯
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+        // LED3
+        if (strcmp(g_rxbuffer, "HCL31") == 0)
+        {
+            printf("Effect: Rainbow Cycle\r\n");
+            ws_effect_rainbow_cycle(1, 20); // 1 轮彩虹
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+        memset(g_rxbuffer, 0, sizeof(g_rxbuffer));
+        vTaskDelay(pdMS_TO_TICKS(1000)); // 1000
+    }
+
+    // while (1)
+	// {
+	// 	//delay_s(2);
+	// 	//delay_ms(20);
+	// 	//yinyue1(60 , Y_speed );
+	// 	//yinyue2(60 , Y_speed );
+	// 	//表示数据接受完毕
+	// 	if(g_flag == 1) //g_rxbuffer即有数据
+	// 	{
+			
+	// 		while(strcmp(g_rxbuffer, "HCL11") ==0)
+	// 		{
+	// 			yinyue1(60 , Y_speed );
+	// 		}
+	// 		while(strcmp(g_rxbuffer, "HCL61") == 0)
+	// 		{
+	// 			yinyue2(60 , Y_speed );
+	// 		}
+	// 		//LED2
+	// 		while(strcmp(g_rxbuffer, "HCL41") == 0)
+	// 		{
+	// 			//RGB_SKY(60,Y_speed);  //8个灯SKY
+	// 			pz(60 ,Y_speed);
+	// 		}
+	// 		while(strcmp(g_rxbuffer, "HCL21") == 0)
+	// 		{
+	// 			//RGB_BLUE(60,Y_speed);	//8个灯全
+	// 			wsws(60 , Y_speed);
+	// 		}
+	// 		//LED3
+	// 		while(strcmp(g_rxbuffer, "HCL31") == 0)
+	// 		{
+	// 			zj(60,Y_speed);	
+	// 		}
+	// 		while(strcmp(g_rxbuffer, "HCL20") == 0)
+	// 		{
+	// 			rainbowCycle(60 ,Y_speed);
+	// 		}
+	// 		//LED4
+	// 		while(strcmp(g_rxbuffer, "HCL30") == 0)
+	// 		{
+	// 			liuzhuanmode(60 ,Y_speed);
+	// 		}
+	// 		while(strcmp(g_rxbuffer, "HCL10") == 0)
+	// 		{
+	// 			tiaodong(60 , Y_speed );
+	// 		}
+	// 		while(strcmp(g_rxbuffer, "HCL00") == 0)
+	// 		{
+	// 			RGB_BLACK(60,Y_speed);
+	// 		}
+	// 		if(strcmp(g_rxbuffer, "HCL03") == 0)
+	// 		{
+	// 			Y_speed = Y_speed+4;
+	// 			if(Y_speed > 40)
+	// 			{
+	// 				Y_speed = 40;
+	// 			}
+	// 		}
+	// 		if(strcmp(g_rxbuffer, "HCL04") == 0)
+	// 		{
+	// 			Y_speed = Y_speed-4;
+	// 			if(Y_speed < 0)
+	// 			{
+	// 				Y_speed = 1;
+	// 			}
+	// 		}
+	// 		memset(g_rxbuffer, 0, sizeof(g_rxbuffer));
+			
+	// 		//接受标志位置0
+	// 		g_flag = 0;
+			
+	// 	}
+	// }
+}
 
 
 /**

@@ -42,6 +42,9 @@
 #include "semphr.h" 	// 信号量相关函数
 #include "event_groups.h"
 #include "HS0038.h"
+#include "ADC.h"
+#include "ws2812.h"
+
 
 
 // 二、宏定义(函数、变量、常量)

@@ -14,6 +14,8 @@
 "..\obj\dht11.o"
 "..\obj\esp8266.o"
 "..\obj\hs0038.o"
+"..\obj\adc.o"
+"..\obj\ws2812.o"
 "..\obj\delay.o"
 "..\obj\uart.o"
 "..\obj\misc.o"

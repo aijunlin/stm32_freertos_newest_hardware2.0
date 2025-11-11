@@ -76,3 +76,5 @@
 ..\obj\main.o: ..\FreeRTOS\include\event_groups.h
 ..\obj\main.o: ..\FreeRTOS\include\timers.h
 ..\obj\main.o: ..\GECM4_LIB\HS0038.h
+..\obj\main.o: ..\GECM4_LIB\ADC.h
+..\obj\main.o: ..\GECM4_LIB\ws2812.h
