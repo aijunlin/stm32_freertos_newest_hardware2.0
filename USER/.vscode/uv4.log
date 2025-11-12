@@ -11,7 +11,7 @@ Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDB
 * JLink Info: InitTarget() start
 * JLink Info: SWD selected. Executing JTAG -> SWD switching sequence.
 * JLink Info: DAP initialized successfully.
-* JLink Info: InitTarget() end - Took 29.2ms
+* JLink Info: InitTarget() end - Took 32.1ms
 * JLink Info: Found SW-DP with ID 0x2BA01477
 * JLink Info: DPv0 detected
 * JLink Info: CoreSight SoC-400 or earlier
@@ -41,7 +41,7 @@ Target info:
 ------------
 Device: STM32F407VETx
 VTarget = 3.300V
-State of Pins: TCK: 0, TDI: 0, TDO: 1, TMS: 0, TRES: 1, TRST: 1
+State of Pins: TCK: 0, TDI: 0, TDO: 1, TMS: 0, TRES: 1, TRST: 0
 Hardware-Breakpoints: 6
 Software-Breakpoints: 8192
 Watchpoints:          4
@@ -55,5 +55,5 @@ Erase Done.Programming Done.Verify OK.* JLink Info: Memory map 'before startup c
 * JLink Info: Memory map 'after startup completion point' is active
 Application running ...
 * JLink Info: OnDisconnectTarget() start
-* JLink Info: OnDisconnectTarget() end - Took 1.39ms
-Flash Load finished at 11:16:50
+* JLink Info: OnDisconnectTarget() end - Took 1.50ms
+Flash Load finished at 18:41:04

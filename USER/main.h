@@ -27,7 +27,7 @@
 #include "my_config.h"
 #include "my_lib.h"
 #include "my_reg.h"
-
+#include "sys.h"
 #include "led.h"
 #include "key.h"
 #include "buzzer.h"

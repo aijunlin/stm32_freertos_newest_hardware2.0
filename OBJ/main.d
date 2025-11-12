@@ -45,6 +45,7 @@
 ..\obj\main.o: ..\ST_LIB\inc\stm32f4xx_sai.h
 ..\obj\main.o: my_lib.h
 ..\obj\main.o: my_reg.h
+..\obj\main.o: ..\SYSTEM\sys.h
 ..\obj\main.o: ..\GECM4_LIB\led\led.h
 ..\obj\main.o: ..\GECM4_LIB\key\key.h
 ..\obj\main.o: ..\GECM4_LIB\buzzer\buzzer.h
