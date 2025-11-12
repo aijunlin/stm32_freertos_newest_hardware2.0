@@ -48,6 +48,7 @@ static TaskHandle_t ESP8266_Connect_Task_handle;
 static TaskHandle_t HS0038_Task_handle;
 static TaskHandle_t MIC_ADC_Task_handle;
 static TaskHandle_t ws2812_Task_handle;
+static TaskHandle_t ESP8266_Process_Task_handle;
 
 
 
@@ -59,6 +60,7 @@ static void ESP8266_Connect_Task( void * pvParameters );
 static void HS0038_Task( void * pvParameters );
 static void MIC_ADC_Task( void * pvParameters );
 static void ws2812_Task( void * pvParameters );
+static void ESP8266_Process_Task( void * pvParameters );
 
 
 
@@ -137,26 +139,26 @@ int main(void)
 	}
 
 	
-	// (3)、RTOS任务的创建并开启调度				 
-	// 1、创建任务，并存储其标识符
-    xReturned = xTaskCreate(
-								OLED_Task,       	// 任务接口函数
-								"OLED_Task",        // 任务名字
-								512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-								NULL,    		 	// 传递给任务的参数
-								0,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-								&OLED_Task_handle 	// 任务控制块指针
-						    );  
+	// // (3)、RTOS任务的创建并开启调度				 
+    // //oled的任务
+    // xReturned = xTaskCreate(
+	// 							OLED_Task,       	// 任务接口函数
+	// 							"OLED_Task",        // 任务名字
+	// 							512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+	// 							NULL,    		 	// 传递给任务的参数
+	// 							0,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+	// 							&OLED_Task_handle 	// 任务控制块指针
+	// 					    );  
 
-    if( xReturned == pdPASS )						// 创建任务成功
-    {
-		printf("OLED_Task create!\r\n");
-	}
-	else
-	{
-		printf("OLED_Task create failed!\r\n");
-		// 可以在这里处理创建失败的情况
-	}
+    // if( xReturned == pdPASS )						// 创建任务成功
+    // {
+	// 	printf("OLED_Task create!\r\n");
+	// }
+	// else
+	// {
+	// 	printf("OLED_Task create failed!\r\n");
+	// 	// 可以在这里处理创建失败的情况
+	// }
 
 	// 2、创建任务，并存储其标识符
 	xReturned = xTaskCreate(
@@ -198,28 +200,27 @@ int main(void)
 		// 可以在这里处理创建失败的情况
 	}
 			
-	
-	// // 3、创建任务，并存储其标识符
-	// xReturned = xTaskCreate(
-	// 						ESP8266_Connect_Task,		// 任务接口函数
-	// 						"ESP8266_Connect_Task",	   // 任务名字
-	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-	// 						NULL,			   // 传递给任务的参数
-	// 						3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-	// 						&ESP8266_Connect_Task_handle // 任务控制块指针
-	// );
+	//esp8266的连接任务
+	xReturned = xTaskCreate(
+							ESP8266_Connect_Task,		// 任务接口函数
+							"ESP8266_Connect_Task",	   // 任务名字
+							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&ESP8266_Connect_Task_handle // 任务控制块指针
+	);
 
-	// if( xReturned == pdPASS )						// 创建任务成功
-    // {
-	// 	printf("ESP8266_Connect_Task create!\r\n");
-    // }	
-	// else
-	// {
-	// 	printf("ESP8266_Connect_Task create failed!\r\n");
-	// 	// 可以在这里处理创建失败的情况
-	// }
+	if( xReturned == pdPASS )						// 创建任务成功
+    {
+		printf("ESP8266_Connect_Task create!\r\n");
+    }	
+	else
+	{
+		printf("ESP8266_Connect_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
 
-    //3、创建任务，并存储其标识符
+    //红外模块的任务
 	xReturned = xTaskCreate(
 							HS0038_Task,		// 任务接口函数
 							"HS0038_Task",	   // 任务名字
@@ -260,7 +261,7 @@ int main(void)
 	// 	// 可以在这里处理创建失败的情况
 	// }
 
-        // 3、创建任务，并存储其标识符
+    // 3、创建任务，并存储其标识符
 	xReturned = xTaskCreate(
 							ws2812_Task,		// 任务接口函数
 							"ws2812_Task",	   // 任务名字
@@ -280,6 +281,27 @@ int main(void)
 		// 可以在这里处理创建失败的情况
 	}
 	
+
+    // 3、创建任务，并存储其标识符
+	xReturned = xTaskCreate(
+							ESP8266_Process_Task,		// 任务接口函数
+							"ESP8266_Process_Task",	   // 任务名字
+							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&ESP8266_Process_Task_handle // 任务控制块指针
+	);
+
+	if( xReturned == pdPASS )						// 创建任务成功
+    {
+		printf("ESP8266_Process_Task create!\r\n");
+    }	
+	else
+	{
+		printf("ESP8266_Process_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
+
 	// (4)、开启任务调度(堵塞于此，让任务可以运行起来)
 	vTaskStartScheduler();			
 
@@ -368,9 +390,11 @@ static void HS0038_Task(void *pvParameters)
     {
         if (xSemaphoreTake(xIRSemaphore, portMAX_DELAY) == pdTRUE)      //16 c 18
         {
-
+            //在这里关闭中断
+            IR_EXTI_Disable();
+            
             // 安全地处理红外数据
-            printf("HS0038_Start\r\n");
+            printf("HS0038_Start\r\n"); 
             HS0038_Readdata();
             printf("HS0038_Readdata: %X\r\n", data_array[2]);
             if (data_array[2] == 0x16)
@@ -387,8 +411,10 @@ static void HS0038_Task(void *pvParameters)
             }
             
         }
-        xSemaphoreTake(xIRSemaphore, pdMS_TO_TICKS(100));
-        vTaskDelay(pdMS_TO_TICKS(3000)); // 延时3000ms
+        // xSemaphoreTake(xIRSemaphore, pdMS_TO_TICKS(1000) == pdTRUE);
+        vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1000ms
+        //在这里打开中断
+        IR_EXTI_Enable();
     }
 }
 
@@ -424,26 +450,27 @@ static void ws2812_Task(void *pvParameters)
         if (strcmp(g_rxbuffer, "HCL41") == 0)
         {
             printf("Effect: Color Wipe (Red)\r\n");
-            ws_effect_color_wipe(YRED, 50); // 红色流水灯
-            vTaskDelay(pdMS_TO_TICKS(500));
-            ws_effect_color_wipe(YBLACK, 50); // 熄灭
-            vTaskDelay(pdMS_TO_TICKS(500));
+            ws_effect_color_wipe(YRED, 20); // 红色流水灯
+            vTaskDelay(pdMS_TO_TICKS(100));
+            ws_effect_color_wipe(YBLACK, 20); // 熄灭
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
         if (strcmp(g_rxbuffer, "HCL21") == 0)
         {
             printf("Effect: Theater Chase (Blue)\r\n");
-            ws_effect_theater_chase(YBLUE, 100); // 蓝色跑马灯
-            vTaskDelay(pdMS_TO_TICKS(500));
+            ws_effect_theater_chase(YBLUE, 40); // 蓝色跑马灯
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
         // LED3
         if (strcmp(g_rxbuffer, "HCL31") == 0)
         {
             printf("Effect: Rainbow Cycle\r\n");
             ws_effect_rainbow_cycle(1, 20); // 1 轮彩虹
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
-        memset(g_rxbuffer, 0, sizeof(g_rxbuffer));
-        vTaskDelay(pdMS_TO_TICKS(1000)); // 1000
+
+        // memset(g_rxbuffer, 0, sizeof(g_rxbuffer));
+        vTaskDelay(pdMS_TO_TICKS(100)); // 100ms
     }
 
     // while (1)
@@ -521,7 +548,6 @@ static void ws2812_Task(void *pvParameters)
 	// 	}
 	// }
 }
-
 
 /**
   * @brief  ESP8266连接任务
@@ -638,3 +664,54 @@ static void ESP8266_Connect_Task(void *pvParameters)
     }
 }
 
+/**
+  * @brief  ESP8266运行任务
+  * @note   负责处理ESP8266的接收数据，做对应的任务操作
+  * @param  pvParameters: 任务参数
+  * @retval None
+  */
+void ESP8266_Process_Task(void *pvParameters)
+{
+
+    char local_recv_buffer[128]; // 用于本地处理的安全副本
+    while (1)
+    {
+        // 1. 等待 UART3 接收完成信号
+        // 使用较长的超时时间，或 portMAX_DELAY
+        // if (xSemaphoreTake(xUART3_RxSemaphore, portMAX_DELAY) == pdTRUE)
+        // {
+            // 2. 检查是否处于透传模式，并且 flag 被设置
+            // 注意：在 FreeRTOS 中，我们应依赖信号量，但这里为了移植兼容您的裸机 flag 逻辑：
+            if ((esp8266_transparent_transmission_sta == 1) && (uart3_flag == 1))
+            {
+
+                taskENTER_CRITICAL(); // 使用临界区保护全局共享数据的读/写和状态清除
+
+                printf("u3_recvbuf == %s\r\n", uart3_recvbuf);
+                strcpy(local_recv_buffer, (const char *)uart3_recvbuf);
+
+                // 清空相关数据，方便下次接收
+                Uart_DataArray_clear((uint8_t *)uart3_recvbuf, 128);
+                // uart3_count = 0; // 如果是全局变量也需要保护
+                uart3_flag = 0;
+                // uart3_len = 0;   // 如果是全局变量也需要保护
+
+                taskEXIT_CRITICAL();
+
+                // 4. 解析数据并控制外设
+                // 注意：这里使用局部副本 local_recv_buffer
+                if (MY_LIB_CmpArray((int8_t *)local_recv_buffer, (int8_t *)"BUZZER_ON", 9) == 0)
+                {
+                    strcpy(g_rxbuffer, "HCL41");
+                }
+                else if (MY_LIB_CmpArray((int8_t *)local_recv_buffer, (int8_t *)"BUZZER_OFF", 10) == 0)
+                {
+                    strcpy(g_rxbuffer, "HCL21");
+                }
+            }
+        // }
+
+        // 延时一段时间，避免过于频繁的处理
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}

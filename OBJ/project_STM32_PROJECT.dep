@@ -1,6 +1,6 @@
 Dependencies for Project 'project', Target 'STM32_PROJECT': (DO NOT MODIFY !)
 CompilerVersion: 5060960::V5.06 update 7 (build 960)::.\ARMCOMPLIER506
-F (.\main.c)(0x69133DF2)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I ..\USER -I ..\CORE -I ..\ST_LIB\inc -I ..\FreeRTOS\include -I ..\FreeRTOS\portable\RVDS\ARM_CM4F -I ..\GECM4_LIB\key -I ..\GECM4_LIB\led -I ..\GECM4_LIB\buzzer -I ..\SYSTEM\uart -I ..\SYSTEM\delay -I ..\SYSTEM -I ..\GECM4_LIB -I ..\GECM4_LIB\dht11-D__UVISION_VERSION="542" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
+F (.\main.c)(0x6913FBC4)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I ..\USER -I ..\CORE -I ..\ST_LIB\inc -I ..\FreeRTOS\include -I ..\FreeRTOS\portable\RVDS\ARM_CM4F -I ..\GECM4_LIB\key -I ..\GECM4_LIB\led -I ..\GECM4_LIB\buzzer -I ..\SYSTEM\uart -I ..\SYSTEM\delay -I ..\SYSTEM -I ..\GECM4_LIB -I ..\GECM4_LIB\dht11-D__UVISION_VERSION="542" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
 I (main.h)(0x69132275)
 I (F:\app\keil\ARM\ARMCOMPLIER506\include\stdio.h)(0x5E8E3CC2)
 I (my_config.h)(0x690C3A2E)
@@ -76,7 +76,7 @@ I (..\GECM4_LIB\key_timer.h)(0x6908A498)
 I (..\GECM4_LIB\led.h)(0x68F8CD78)
 I (..\FreeRTOS\include\event_groups.h)(0x573F3A18)
 I (..\FreeRTOS\include\timers.h)(0x573F3A18)
-I (..\GECM4_LIB\HS0038.h)(0x6912D7A7)
+I (..\GECM4_LIB\HS0038.h)(0x6913EB84)
 I (..\GECM4_LIB\ADC.h)(0x690B55FE)
 I (..\GECM4_LIB\ws2812.h)(0x69133A1D)
 F (.\stm32f4xx_it.c)(0x690DEB9F)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I ..\USER -I ..\CORE -I ..\ST_LIB\inc -I ..\FreeRTOS\include -I ..\FreeRTOS\portable\RVDS\ARM_CM4F -I ..\GECM4_LIB\key -I ..\GECM4_LIB\led -I ..\GECM4_LIB\buzzer -I ..\SYSTEM\uart -I ..\SYSTEM\delay -I ..\SYSTEM -I ..\GECM4_LIB -I ..\GECM4_LIB\dht11-D__UVISION_VERSION="542" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\stm32f4xx_it.o --omf_browse ..\obj\stm32f4xx_it.crf --depend ..\obj\stm32f4xx_it.d)
@@ -676,8 +676,8 @@ I (..\GECM4_LIB\dht11\DHT11.h)(0x69104980)
 I (..\USER\my_reg.h)(0x68F33F8A)
 I (..\GECM4_LIB\key_timer.h)(0x6908A498)
 I (..\GECM4_LIB\led.h)(0x68F8CD78)
-F (..\GECM4_LIB\HS0038.c)(0x6912D7DE)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I ..\USER -I ..\CORE -I ..\ST_LIB\inc -I ..\FreeRTOS\include -I ..\FreeRTOS\portable\RVDS\ARM_CM4F -I ..\GECM4_LIB\key -I ..\GECM4_LIB\led -I ..\GECM4_LIB\buzzer -I ..\SYSTEM\uart -I ..\SYSTEM\delay -I ..\SYSTEM -I ..\GECM4_LIB -I ..\GECM4_LIB\dht11-D__UVISION_VERSION="542" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\hs0038.o --omf_browse ..\obj\hs0038.crf --depend ..\obj\hs0038.d)
-I (..\GECM4_LIB\HS0038.h)(0x6912D7A7)
+F (..\GECM4_LIB\HS0038.c)(0x6913EB73)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I ..\USER -I ..\CORE -I ..\ST_LIB\inc -I ..\FreeRTOS\include -I ..\FreeRTOS\portable\RVDS\ARM_CM4F -I ..\GECM4_LIB\key -I ..\GECM4_LIB\led -I ..\GECM4_LIB\buzzer -I ..\SYSTEM\uart -I ..\SYSTEM\delay -I ..\SYSTEM -I ..\GECM4_LIB -I ..\GECM4_LIB\dht11-D__UVISION_VERSION="542" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\hs0038.o --omf_browse ..\obj\hs0038.crf --depend ..\obj\hs0038.d)
+I (..\GECM4_LIB\HS0038.h)(0x6913EB84)
 I (..\USER\stm32f4xx.h)(0x5CF00621)
 I (..\CORE\core_cm4.h)(0x53C7D530)
 I (F:\app\keil\ARM\ARMCOMPLIER506\include\stdint.h)(0x5E8E3CC2)

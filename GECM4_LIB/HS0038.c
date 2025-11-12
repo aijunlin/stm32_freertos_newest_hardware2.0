@@ -195,6 +195,27 @@ void HS0038_Readdata(void)
 
 }
 
+
+void IR_EXTI_Enable(void)
+{
+    EXTI_InitTypeDef EXTI_InitStruct;
+    EXTI_InitStruct.EXTI_Line = EXTI_Line8;
+    EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising_Falling; 
+    EXTI_InitStruct.EXTI_LineCmd = ENABLE; // 开启中断请求
+    EXTI_Init(&EXTI_InitStruct);
+}
+
+void IR_EXTI_Disable(void)
+{
+    EXTI_InitTypeDef EXTI_InitStruct;
+    EXTI_InitStruct.EXTI_Line = EXTI_Line8;
+    // 只关心 LineCmd，其他设置将被忽略或保留。
+    EXTI_InitStruct.EXTI_LineCmd = DISABLE; // 关闭中断请求
+    EXTI_Init(&EXTI_InitStruct);
+}
+
+
 /**
  * @brief  HS0038的外部中断函数
  * @param  None

@@ -54,6 +54,9 @@ void HS0038_Readdata(void);
 
 void Enable_HS0038_EXTI8(void);
 #endif /* __HS0038_H */
+void IR_EXTI_Disable(void);
+
+void IR_EXTI_Enable(void);
 
 
 
