@@ -27,6 +27,8 @@
  * 
  * 	V0.1.2  9-November-2025 完成了任务的调度测试，完成了esp8266模块的引入和测试 完成了hs0038模块的引入和测试
  * 
+ * 	V0.1.2  11-November-2025 开始裁剪原项目
+ * 
  * 
  ******************************************************************************
  */
@@ -39,64 +41,43 @@
 EventGroupHandle_t xESP8266EventGroup = NULL;
 
 
-
 // 任务控制块指针(相当于Linux的线程标识符)
 static TaskHandle_t OLED_Task_handle;
-static TaskHandle_t DHT11_Task_handle;
 static TaskHandle_t HC_SR04_Task_handle;
 static TaskHandle_t ESP8266_Connect_Task_handle;
-static TaskHandle_t HS0038_Task_handle;
-static TaskHandle_t MIC_ADC_Task_handle;
-static TaskHandle_t ws2812_Task_handle;
 static TaskHandle_t ESP8266_Process_Task_handle;
 
 
 
 // 任务函数声明
 static void OLED_Task( void * pvParameters );
-static void DHT11_Task( void * pvParameters );
 static void HC_SR04_Task( void * pvParameters );
 static void ESP8266_Connect_Task( void * pvParameters );
-static void HS0038_Task( void * pvParameters );
-static void MIC_ADC_Task( void * pvParameters );
-static void ws2812_Task( void * pvParameters );
 static void ESP8266_Process_Task( void * pvParameters );
 
 
 
-//全局变量的声明空间
-SemaphoreHandle_t xDHT11Mutex;
-
-
-uint8_t DHT11_Data[5] = {0};
 uint32_t distance;
 
 
-u8 g_data;
-u8 g_flag = 0, g_count = 0;
+
 u8 g_buffer[32] = {0};
 char g_rxbuffer[32] = {0};
-int Y_speed=10 ;
 
 
 void Hardware_Init(void)
 {
 
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);//设置中断的分组为4
 
-	Uart_Init();
-	Uart2_Init();
+	Uart_Init();//uart1主要用来打印
+	Uart2_Init();//uart2主要用来接受蓝牙的传送信号
 	LED_Init();
 	KEY_Init();
-	BUZZER_Init();
-	OLED_Init();
-	DHT11_Init();
-	HC_SR04_Init();
-	Esp8266_Init(115200);
-	HS_0038_Init();
-    WS2812b_Configuration();
-	ADC1_Init();
-
+	BUZZER_Init();//蜂鸣器的初始化
+	OLED_Init();//本地的oled的使用
+	HC_SR04_Init();//超声波传感器用来接受液面的数据
+	Esp8266_Init(115200);//初始化esp8266来发送检的数据
 }
 
 
@@ -108,10 +89,6 @@ int main(void)
 	// (1)、相关变量区域
 	BaseType_t xReturned;	// 任务创建函数的返回值
 	
-	xDHT11Mutex = xSemaphoreCreateMutex();
-    if (xDHT11Mutex == NULL) {
-        printf("DHT11 Mutex create failed!\r\n");
-    }
 
 	// 创建ESP8266事件组（必须添加）
 	xESP8266EventGroup = xEventGroupCreate();
@@ -122,64 +99,28 @@ int main(void)
 		printf("ESP8266 Event Group create success!\r\n");
 	}
 
-    // // 创建HC-SR04信号量（二进制信号量）
-	// xHCSR04Semaphore = xSemaphoreCreateBinary();
-	// if (xHCSR04Semaphore == NULL) {
-	// 	printf("HC-SR04 Semaphore create failed!\r\n");
-	// } else {
-	// 	printf("HC-SR04 Semaphore create success!\r\n");
-	// }
-
-    // 创建HC-SR04信号量（二进制信号量）
-	xIRSemaphore = xSemaphoreCreateBinary();
-	if (xIRSemaphore == NULL) {
-		printf("HC-xIRSemaphore Semaphore create failed!\r\n");
-	} else {
-		printf("HC-xIRSemaphore Semaphore create success!\r\n");
-	}
-
 	
-	// // (3)、RTOS任务的创建并开启调度				 
-    // //oled的任务
-    // xReturned = xTaskCreate(
-	// 							OLED_Task,       	// 任务接口函数
-	// 							"OLED_Task",        // 任务名字
-	// 							512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-	// 							NULL,    		 	// 传递给任务的参数
-	// 							0,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-	// 							&OLED_Task_handle 	// 任务控制块指针
-	// 					    );  
+	// (3)、RTOS任务的创建并开启调度				 
+    //oled的任务
+    xReturned = xTaskCreate(
+								OLED_Task,       	// 任务接口函数
+								"OLED_Task",        // 任务名字
+								512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+								NULL,    		 	// 传递给任务的参数
+								3,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+								&OLED_Task_handle 	// 任务控制块指针
+						    );  
 
-    // if( xReturned == pdPASS )						// 创建任务成功
-    // {
-	// 	printf("OLED_Task create!\r\n");
-	// }
-	// else
-	// {
-	// 	printf("OLED_Task create failed!\r\n");
-	// 	// 可以在这里处理创建失败的情况
-	// }
-
-	// 2、创建任务，并存储其标识符
-	xReturned = xTaskCreate(
-							DHT11_Task,		   // 任务接口函数
-							"DHT11_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-							NULL,			   // 传递给任务的参数
-							2,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-							&DHT11_Task_handle // 任务控制块指针
-	);
-
-	if( xReturned == pdPASS )						// 创建任务成功
+    if( xReturned == pdPASS )						// 创建任务成功
     {
-		printf("DHT11_Task create!\r\n");
-    }	
+		printf("OLED_Task create!\r\n");
+	}
 	else
 	{
-		printf("DHT11_Task create failed!\r\n");
+		printf("OLED_Task create failed!\r\n");
 		// 可以在这里处理创建失败的情况
 	}
-	
+
 	// 3、创建任务，并存储其标识符
 	xReturned = xTaskCreate(
 							HC_SR04_Task,		// 任务接口函数
@@ -200,107 +141,45 @@ int main(void)
 		// 可以在这里处理创建失败的情况
 	}
 			
-	//esp8266的连接任务
-	xReturned = xTaskCreate(
-							ESP8266_Connect_Task,		// 任务接口函数
-							"ESP8266_Connect_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-							NULL,			   // 传递给任务的参数
-							3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-							&ESP8266_Connect_Task_handle // 任务控制块指针
-	);
-
-	if( xReturned == pdPASS )						// 创建任务成功
-    {
-		printf("ESP8266_Connect_Task create!\r\n");
-    }	
-	else
-	{
-		printf("ESP8266_Connect_Task create failed!\r\n");
-		// 可以在这里处理创建失败的情况
-	}
-
-    //红外模块的任务
-	xReturned = xTaskCreate(
-							HS0038_Task,		// 任务接口函数
-							"HS0038_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-							NULL,			   // 传递给任务的参数
-							3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-							&HS0038_Task_handle // 任务控制块指针
-	);
-
-	if( xReturned == pdPASS )						// 创建任务成功
-    {
-		printf("HS0038_Task create!\r\n");
-    }	
-	else
-	{
-		printf("HS0038_Task create failed!\r\n");
-		// 可以在这里处理创建失败的情况
-	}
-
-
-    // //3、创建任务，并存储其标识符
+	// //esp8266的连接任务
 	// xReturned = xTaskCreate(
-	// 						MIC_ADC_Task,		// 任务接口函数
-	// 						"MIC_ADC_Task",	   // 任务名字
+	// 						ESP8266_Connect_Task,		// 任务接口函数
+	// 						"ESP8266_Connect_Task",	   // 任务名字
 	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
 	// 						NULL,			   // 传递给任务的参数
-	// 						0,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-	// 						&MIC_ADC_Task_handle // 任务控制块指针
+	// 						3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+	// 						&ESP8266_Connect_Task_handle // 任务控制块指针
 	// );
 
 	// if( xReturned == pdPASS )						// 创建任务成功
     // {
-	// 	printf("MIC_ADC_Task create!\r\n");
+	// 	printf("ESP8266_Connect_Task create!\r\n");
     // }	
 	// else
 	// {
-	// 	printf("MIC_ADC_Task create failed!\r\n");
+	// 	printf("ESP8266_Connect_Task create failed!\r\n");
 	// 	// 可以在这里处理创建失败的情况
 	// }
 
-    // 3、创建任务，并存储其标识符
-	xReturned = xTaskCreate(
-							ws2812_Task,		// 任务接口函数
-							"ws2812_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-							NULL,			   // 传递给任务的参数
-							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-							&ws2812_Task_handle // 任务控制块指针
-	);
+    // // 3、创建任务，并存储其标识符
+	// xReturned = xTaskCreate(
+	// 						ESP8266_Process_Task,		// 任务接口函数
+	// 						"ESP8266_Process_Task",	   // 任务名字
+	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+	// 						NULL,			   // 传递给任务的参数
+	// 						4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+	// 						&ESP8266_Process_Task_handle // 任务控制块指针
+	// );
 
-	if( xReturned == pdPASS )						// 创建任务成功
-    {
-		printf("ws2812_Task create!\r\n");
-    }	
-	else
-	{
-		printf("ws2812_Task create failed!\r\n");
-		// 可以在这里处理创建失败的情况
-	}
-	
-
-    // 3、创建任务，并存储其标识符
-	xReturned = xTaskCreate(
-							ESP8266_Process_Task,		// 任务接口函数
-							"ESP8266_Process_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-							NULL,			   // 传递给任务的参数
-							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-							&ESP8266_Process_Task_handle // 任务控制块指针
-	);
-
-	if( xReturned == pdPASS )						// 创建任务成功
-    {
-		printf("ESP8266_Process_Task create!\r\n");
-    }	
-	else
-	{
-		printf("ESP8266_Process_Task create failed!\r\n");
-		// 可以在这里处理创建失败的情况
-	}
+	// if( xReturned == pdPASS )						// 创建任务成功
+    // {
+	// 	printf("ESP8266_Process_Task create!\r\n");
+    // }	
+	// else
+	// {
+	// 	printf("ESP8266_Process_Task create failed!\r\n");
+	// 	// 可以在这里处理创建失败的情况
+	// }
 
 	// (4)、开启任务调度(堵塞于此，让任务可以运行起来)
 	vTaskStartScheduler();			
@@ -313,54 +192,19 @@ int main(void)
   * @param  None
   * @retval None
   */
-static void OLED_Task( void * pvParameters)
+static void OLED_Task(void *pvParameters)
 {
-
- uint8_t local_DHT11_Data[5] = {0};
-    
     while (1)
-    {
-        // 获取互斥锁并复制数据
-        if (xSemaphoreTake(xDHT11Mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-            memcpy(local_DHT11_Data, DHT11_Data, sizeof(DHT11_Data));
-            xSemaphoreGive(xDHT11Mutex);
-            
-            // 使用本地副本显示
-            OLED_ShowNum(32, 16, local_DHT11_Data[0], 2, OLED_8X16);
-            OLED_ShowNum(64, 16, local_DHT11_Data[2], 2, OLED_8X16);
-        }
-        
-        vTaskDelay( pdMS_TO_TICKS( 25 ) );
+    {   
+        OLED_ShowNum(32, 16, distance, 3, OLED_8X16);
+        OLED_UpdateArea(32, 16, 24, 16);
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
-
-/**
-  * @brief  任务2函数实现
-  * @note   实现蜂鸣器的响和不响
-  * @param  None
-  * @retval None
-  */
-static void DHT11_Task(void *pvParameters)
-{
-	while (1)
-	{
-		// 获取互斥锁
-        if (xSemaphoreTake(xDHT11Mutex, portMAX_DELAY) == pdTRUE) {
-            DHT11_GetData(DHT11_Data);
-			printf("DHT11_Data[0] = %d, DHT11_Data[2] = %d\r\n", DHT11_Data[0], DHT11_Data[2]);
-            // 释放互斥锁
-            xSemaphoreGive(xDHT11Mutex);
-        }
-		vTaskDelay( pdMS_TO_TICKS( 1000 ) ); // 延时1000ms
-
-	}
-}
-
-
 /**
   * @brief  任务3函数实现
-  * @note   实现超声波测距
+  * @note   实现超声波测距 采集的速率1s一次
   * @param  None
   * @retval None
   */
@@ -372,181 +216,9 @@ static void HC_SR04_Task(void *pvParameters)
 		distance = HC_SR04_Get_Distance();
 		printf("distance = %dmm\r\n", distance);
 
-		vTaskDelay( pdMS_TO_TICKS( 1000 ) ); // 延时100ms
+		vTaskDelay( pdMS_TO_TICKS(1000)); 
 
 	}
-}
-
-
-/**
-  * @brief  任务HS0038通信函数实现
-  * @note   实现HS0038通信
-  * @param  None
-  * @retval None
-  */
-static void HS0038_Task(void *pvParameters)
-{
-    while (1)
-    {
-        if (xSemaphoreTake(xIRSemaphore, portMAX_DELAY) == pdTRUE)      //16 c 18
-        {
-            //在这里关闭中断
-            IR_EXTI_Disable();
-            
-            // 安全地处理红外数据
-            printf("HS0038_Start\r\n"); 
-            HS0038_Readdata();
-            printf("HS0038_Readdata: %X\r\n", data_array[2]);
-            if (data_array[2] == 0x16)
-            {
-                 strcpy(g_rxbuffer, "HCL41");
-            }
-            if (data_array[2] == 0xC)
-            {
-                 strcpy(g_rxbuffer, "HCL21");
-            }
-            if (data_array[2] == 0x18)
-            {
-                 strcpy(g_rxbuffer, "HCL31");
-            }
-            
-        }
-        // xSemaphoreTake(xIRSemaphore, pdMS_TO_TICKS(1000) == pdTRUE);
-        vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1000ms
-        //在这里打开中断
-        IR_EXTI_Enable();
-    }
-}
-
-/**
-  * @brief  任务麦克风采集ADC数据函数实现
-  * @note   实现麦克风采集ADC数据
-  * @param  None
-  * @retval None
-  */
-static void MIC_ADC_Task(void *pvParameters)
-{
-    while (1)
-    {
-        uint16_t adc_val = ADC1_Convert(ADC_Channel_5);
-        uint16_t adc_val1 = ADC1_Convert(ADC_Channel_6);
-        printf("MIC_ADC_Task: %d\r\n", adc_val);
-        printf("ADC_Task: %d\r\n", adc_val1);
-        vTaskDelay(pdMS_TO_TICKS(1000)); // 延时3000ms
-    }
-}
-
-/**
-  * @brief  任务ws2812控制函数实现
-  * @note   实现ws2812控制
-  * @param  None
-  * @retval None
-  */
-static void ws2812_Task(void *pvParameters)
-{
-
-    while (1)
-    {
-        if (strcmp(g_rxbuffer, "HCL41") == 0)
-        {
-            printf("Effect: Color Wipe (Red)\r\n");
-            ws_effect_color_wipe(YRED, 20); // 红色流水灯
-            vTaskDelay(pdMS_TO_TICKS(100));
-            ws_effect_color_wipe(YBLACK, 20); // 熄灭
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-        if (strcmp(g_rxbuffer, "HCL21") == 0)
-        {
-            printf("Effect: Theater Chase (Blue)\r\n");
-            ws_effect_theater_chase(YBLUE, 40); // 蓝色跑马灯
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-        // LED3
-        if (strcmp(g_rxbuffer, "HCL31") == 0)
-        {
-            printf("Effect: Rainbow Cycle\r\n");
-            ws_effect_rainbow_cycle(1, 20); // 1 轮彩虹
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-
-        // memset(g_rxbuffer, 0, sizeof(g_rxbuffer));
-        vTaskDelay(pdMS_TO_TICKS(100)); // 100ms
-    }
-
-    // while (1)
-	// {
-	// 	//delay_s(2);
-	// 	//delay_ms(20);
-	// 	//yinyue1(60 , Y_speed );
-	// 	//yinyue2(60 , Y_speed );
-	// 	//表示数据接受完毕
-	// 	if(g_flag == 1) //g_rxbuffer即有数据
-	// 	{
-			
-	// 		while(strcmp(g_rxbuffer, "HCL11") ==0)
-	// 		{
-	// 			yinyue1(60 , Y_speed );
-	// 		}
-	// 		while(strcmp(g_rxbuffer, "HCL61") == 0)
-	// 		{
-	// 			yinyue2(60 , Y_speed );
-	// 		}
-	// 		//LED2
-	// 		while(strcmp(g_rxbuffer, "HCL41") == 0)
-	// 		{
-	// 			//RGB_SKY(60,Y_speed);  //8个灯SKY
-	// 			pz(60 ,Y_speed);
-	// 		}
-	// 		while(strcmp(g_rxbuffer, "HCL21") == 0)
-	// 		{
-	// 			//RGB_BLUE(60,Y_speed);	//8个灯全
-	// 			wsws(60 , Y_speed);
-	// 		}
-	// 		//LED3
-	// 		while(strcmp(g_rxbuffer, "HCL31") == 0)
-	// 		{
-	// 			zj(60,Y_speed);	
-	// 		}
-	// 		while(strcmp(g_rxbuffer, "HCL20") == 0)
-	// 		{
-	// 			rainbowCycle(60 ,Y_speed);
-	// 		}
-	// 		//LED4
-	// 		while(strcmp(g_rxbuffer, "HCL30") == 0)
-	// 		{
-	// 			liuzhuanmode(60 ,Y_speed);
-	// 		}
-	// 		while(strcmp(g_rxbuffer, "HCL10") == 0)
-	// 		{
-	// 			tiaodong(60 , Y_speed );
-	// 		}
-	// 		while(strcmp(g_rxbuffer, "HCL00") == 0)
-	// 		{
-	// 			RGB_BLACK(60,Y_speed);
-	// 		}
-	// 		if(strcmp(g_rxbuffer, "HCL03") == 0)
-	// 		{
-	// 			Y_speed = Y_speed+4;
-	// 			if(Y_speed > 40)
-	// 			{
-	// 				Y_speed = 40;
-	// 			}
-	// 		}
-	// 		if(strcmp(g_rxbuffer, "HCL04") == 0)
-	// 		{
-	// 			Y_speed = Y_speed-4;
-	// 			if(Y_speed < 0)
-	// 			{
-	// 				Y_speed = 1;
-	// 			}
-	// 		}
-	// 		memset(g_rxbuffer, 0, sizeof(g_rxbuffer));
-			
-	// 		//接受标志位置0
-	// 		g_flag = 0;
-			
-	// 	}
-	// }
 }
 
 /**
@@ -556,7 +228,7 @@ static void ws2812_Task(void *pvParameters)
   * @retval None
   */
 static void ESP8266_Connect_Task(void *pvParameters)
-{
+{ 
     uint8_t retry_count = 0;
     const uint8_t max_retry = 3;
     

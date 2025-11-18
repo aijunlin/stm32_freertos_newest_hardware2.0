@@ -57,6 +57,8 @@
 #define ESP8266_BIT_ERROR           (1 << 5)  // 错误状态
 #define ESP8266_BIT_RECONNECT       (1 << 6)  // 需要重新连接
 
+#define ALPHA 0.1f//滑动均值滤波的数据
+
 
 // 三、自定义的数据类型(结构体、联合体、枚举等)
 

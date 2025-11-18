@@ -151,7 +151,8 @@ int8_t ESP8266_ExitTransparentTransmission(void)
 {
 	// 1、退出透传模式，发送下一条指令要间隔1S
 	ESP8266_SendATCmd("+++");   //退出at的命令
-	
+	Delay_ms(500);
+		
 	// 2、记录当前ESP8266模块工作在非透传模式下
 	esp8266_transparent_transmission_sta = 0;
 	

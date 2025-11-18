@@ -57,3 +57,4 @@
 ..\obj\hs0038.o: ..\FreeRTOS\include\list.h
 ..\obj\hs0038.o: ..\FreeRTOS\include\semphr.h
 ..\obj\hs0038.o: ..\FreeRTOS\include\queue.h
+..\obj\hs0038.o: ..\GECM4_LIB\ws2812.h

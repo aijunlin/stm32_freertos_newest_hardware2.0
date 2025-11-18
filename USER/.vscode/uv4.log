@@ -1,5 +1,5 @@
 Load "..\\OBJ\\project.axf" 
-Set JLink Project File to "f:\desktop\work\codefile\stm32Ä£°æ2\stm32_freertos_newest\USER\JLinkSettings.ini"* JLink Info: Device "STM32F407VE" selected.
+Set JLink Project File to "f:\desktop\final_wrok\final_wrok\stm32_freertos_newest\USER\JLinkSettings.ini"* JLink Info: Device "STM32F407VE" selected.
 
 JLink info:
 ------------
@@ -11,7 +11,7 @@ Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDB
 * JLink Info: InitTarget() start
 * JLink Info: SWD selected. Executing JTAG -> SWD switching sequence.
 * JLink Info: DAP initialized successfully.
-* JLink Info: InitTarget() end - Took 32.1ms
+* JLink Info: InitTarget() end - Took 39.8ms
 * JLink Info: Found SW-DP with ID 0x2BA01477
 * JLink Info: DPv0 detected
 * JLink Info: CoreSight SoC-400 or earlier
@@ -55,5 +55,5 @@ Erase Done.Programming Done.Verify OK.* JLink Info: Memory map 'before startup c
 * JLink Info: Memory map 'after startup completion point' is active
 Application running ...
 * JLink Info: OnDisconnectTarget() start
-* JLink Info: OnDisconnectTarget() end - Took 1.50ms
-Flash Load finished at 18:41:04
+* JLink Info: OnDisconnectTarget() end - Took 1.68ms
+Flash Load finished at 20:29:24

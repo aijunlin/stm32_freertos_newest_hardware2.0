@@ -28,6 +28,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+#include "ws2812.h"
 
 
 

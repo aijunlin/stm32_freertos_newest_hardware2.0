@@ -46,6 +46,8 @@ extern const RGBColor_TypeDef YPURPLE;
 extern const RGBColor_TypeDef YPINK;
 
 
+
+
 // --- 驱动核心函数 (来自你的代码) ---
 /**
  * @brief  初始化 SPI 和 DMA
@@ -129,5 +131,20 @@ void ws_effect_breathe(RGBColor_TypeDef color, uint16_t delay_ms);
  */
 void ws_effect_tiaodong_fixed(uint16_t delay_ms);
 
+void ws_effect_rainbow_cycle(uint16_t cycles, uint16_t delay_ms);
+
+void ws_effect_color_wipe(RGBColor_TypeDef color, uint16_t delay_ms);
+
+void ws_effect_theater_chase(RGBColor_TypeDef color, uint16_t delay_ms);
+
+void ws_effect_scan(RGBColor_TypeDef color, uint16_t delay_ms);
+
+void ws_effect_breathe(RGBColor_TypeDef color, uint16_t delay_ms);
+
 
 #endif /* __WS2812_H */
+
+
+
+
+

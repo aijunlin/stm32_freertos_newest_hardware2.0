@@ -226,24 +226,21 @@ void EXTI9_5_IRQHandler(void)
 {	
 	// 1. 声明标志位，用于检查是否需要任务切换
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	if(EXTI_GetITStatus(EXTI_Line8) == SET)  				// 判断是否出发了外部中断0线
-	{
-		// EXTI_InitTypeDef EXTI_InitStruct;
+    if (EXTI_GetITStatus(EXTI_Line8) == SET) // 判断是否出发了外部中断0线
+    {
+        // EXTI_InitTypeDef EXTI_InitStruct;
         // EXTI_InitStruct.EXTI_LineCmd = DISABLE; // 禁用 EXTI
         // EXTI_Init(&EXTI_InitStruct);
 
         // 给信号量发送信号
-      if (xIRSemaphore != NULL) {
+        if (xIRSemaphore != NULL)
+        {
             xSemaphoreGiveFromISR(xIRSemaphore, &xHigherPriorityTaskWoken);
         }
-		
-		// printf("receive data%X\r\n", data_array[2]);	// 经过测算，获取的地址码为0，所以可以不用
-		
-		EXTI_ClearITPendingBit(EXTI_Line8);	  				// 清除外部中断0线的中断挂起标志位
-	}				
+
+        // printf("receive data%X\r\n", data_array[2]);	// 经过测算，获取的地址码为0，所以可以不用
+
+        EXTI_ClearITPendingBit(EXTI_Line8); // 清除外部中断0线的中断挂起标志位
+    }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
-
-
-
-
