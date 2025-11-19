@@ -49,15 +49,15 @@
 
 // 二、宏定义(函数、变量、常量)
 // ESP8266状态标志位定义
-#define ESP8266_BIT_WIFI_CONNECTED   (1 << 0)  // WiFi已连接
-#define ESP8266_BIT_SERVER_CONNECTED (1 << 1)  // 服务器已连接
-#define ESP8266_BIT_READY           (1 << 2)  // 系统就绪
-#define ESP8266_BIT_SEND_REQUEST    (1 << 3)  // 发送数据请求
-#define ESP8266_BIT_SEND_COMPLETE   (1 << 4)  // 数据发送完成
-#define ESP8266_BIT_ERROR           (1 << 5)  // 错误状态
-#define ESP8266_BIT_RECONNECT       (1 << 6)  // 需要重新连接
+#define ESP8266_BIT_WIFI_CONNECTED    (1 << 0)  // WiFi已连接
+#define ESP8266_BIT_SERVER_CONNECTED  (1 << 1)  // 服务器已连接
+#define ESP8266_BIT_READY             (1 << 2)  // 系统就绪
+#define ESP8266_BIT_SEND_REQUEST      (1 << 3)  // 发送数据请求
+#define ESP8266_BIT_SEND_COMPLETE     (1 << 4)  // 数据发送完成
+#define ESP8266_BIT_ERROR             (1 << 5)  // 错误状态
+#define ESP8266_BIT_RECONNECT         (1 << 6)  // 需要重新连接
+#define ESP8266_BIT_HEARTBEAT_ECHO    (1 << 7) // 新增：心跳回声标志
 
-#define ALPHA 0.1f//滑动均值滤波的数据
 
 
 // 三、自定义的数据类型(结构体、联合体、枚举等)

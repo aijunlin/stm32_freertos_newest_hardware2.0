@@ -19,6 +19,10 @@
         "sys.h": "c",
         "key.h": "c",
         "led.h": "c",
-        "buzzer.h": "c"
+        "buzzer.h": "c",
+        "key_timer.h": "c",
+        "cstdint": "c",
+        "limits": "c",
+        "stm32f4xx.h": "c"
     }
 }

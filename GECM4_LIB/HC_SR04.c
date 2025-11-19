@@ -24,7 +24,7 @@ uint8_t HC_SR04_start_flag = 0;
 static uint8_t cnt = 0;   //静态变量函数退出后值不会变
 
 // SemaphoreHandle_t xHCSR04Semaphore = NULL;
-
+uint32_t distance;
 
 
 /**

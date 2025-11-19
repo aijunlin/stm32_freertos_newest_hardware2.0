@@ -27,6 +27,7 @@ static uint8_t cnt = 0;   //静态变量函数退出后值不会变
 struct esp8266_start esp8266 = {0};
 
 
+
 /**
   * @brief  通过ESP8266模块来上网
   * @note   None
@@ -173,7 +174,7 @@ void ESP8266_SendATCmd(const char* cmd_str)
 	uart3_flag  = 0;
 	uart3_len   = 0;
 	
-	// 2、串口3发送字符串数据
+	// 2、串口3发送字符串数据 
 	USART3_SendStr(cmd_str);
 }
 
@@ -434,14 +435,22 @@ void esp8266_test_demo(void)
   * @retval 
   *         
   */
-void esp8266_DataReport(void)
+uint8_t esp8266_DataReport(const char* msg_str)
 {
-	char data[64];
-	// sprintf(data,"#chat stm32 huminity%d,temporture%d",DHT11_Data[0],DHT11_Data[2]);	//拼接温湿度数据进行发送  可以改成json发送
+ 	char data[64];
 
-	ESP8266_SendMsg(data);
+    sprintf(data, "#chat win1 %d", distance); // 拼接温湿度数据进行发送 可以改成json发送
+
+
+    ESP8266_SendMsg(data);
+
+
+
+
 
 }
+
+
 
 void esp8266_Timer_Tick(void)
 {
@@ -452,4 +461,22 @@ void esp8266_Timer_Tick(void)
         cnt = 0;
     }
 }
+
+
+/**
+ * @brief 发送心跳包并等待服务器确认
+ * @return 0: 收到正确响应；-1: 发送失败；-2: 收到错误响应或超时
+ */
+void  ESP8266_SendHeartbeat(void)
+{   
+	taskENTER_CRITICAL(); // 使用临界区保护全局共享数据的读/写和状态清除
+
+	ESP8266_SendMsg(HEARTBEAT_MESSAGE);//直接发送心跳包
+    taskEXIT_CRITICAL();
+
+
+}
+
+
+
 

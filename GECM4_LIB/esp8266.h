@@ -27,6 +27,7 @@
 #include "key.h"
 #include "DHT11.h"
 #include "key_timer.h"
+#include "HC_SR04.h"
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -37,6 +38,12 @@
 #define SOCKET_MODE "TCP"
 #define SOCKET_IP   "8.134.121.55"
 #define SOCKET_PORT 50001			
+
+
+#define HEARTBEAT_MESSAGE               "#heartbeat\r\n"
+#define HEARTBEAT_ECHO_TIMEOUT_MS       10000   // 等待服务器回声的超时时间 (60秒)
+
+
 
 /* Exported constants --------------------------------------------------------*/
 
@@ -83,8 +90,9 @@ void esp8266_test_demo(void);
 
 void esp8266_Timer_Tick(void);
 
-void esp8266_DataReport(void);
+uint8_t esp8266_DataReport(const char* msg_str);
 
+void  ESP8266_SendHeartbeat(void);
 #endif /* __ESP8266_H */
 
 

@@ -40,8 +40,8 @@
 
 
 /* Exported constants --------------------------------------------------------*/
-extern volatile uint32_t Dis;
 extern uint8_t HC_SR04_start_flag;
+extern uint32_t distance;
 
 // extern SemaphoreHandle_t xHCSR04Semaphore;
 
