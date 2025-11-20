@@ -39,6 +39,40 @@ void KEY_Init(void)
 }
 
 
+/**
+ * @brief  FreeRTOS适配版 按键扫描函数
+ * @param  mode: 0=不支持连按; 1=支持连按
+ * @retval 键值 (KEY0_PRES... 或 KEY_NONE)
+ */
+uint8_t KEY_Scan(uint8_t mode)
+{
+    static uint8_t key_up = 1; // 按键松开标志
+    
+    // 如果支持连按，每次都重置标志位
+    if (mode) key_up = 1;
 
+    // 1. 检测按键是否按下 
+    // (KEY0==1 或 其他==0)
+    if (key_up && (KEY1 == 1 || KEY2 == 0 || KEY3 == 0 || KEY4 == 0))
+    {
+        // 2. RTOS消抖：挂起当前任务 20ms，让出CPU给其他任务
+        vTaskDelay(pdMS_TO_TICKS(20)); 
+
+        key_up = 0; // 标记已按下
+
+        // 3. 再次检测，确认不是干扰
+        if (KEY1 == 1) return 1;
+        else if (KEY2 == 0) return 2;
+        else if (KEY3 == 0) return 3;
+        else if (KEY4 == 0) return 4;
+    }
+    // 4. 检测按键是否松开
+    else if (KEY1 == 0 && KEY2 == 1 && KEY3 == 1 && KEY4 == 1)
+    {
+        key_up = 1;
+    }
+
+    return 0;
+}
 
 

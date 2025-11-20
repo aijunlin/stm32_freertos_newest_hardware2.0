@@ -1,10 +1,9 @@
-
 /**
   ******************************************************************************
-  * @file    HC_SR04.h
+  * @file    motor.h
   * @author  ajl  
   * @version V0.0.1
-  * @date    23-Octorber-2025
+  * @date    26-Octorber-2025
   * @brief   
   *          
   ******************************************************************************
@@ -18,50 +17,31 @@
   ******************************************************************************
   */
 
-
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __HC_SR04_H
-#define __HC_SR04_H
+#ifndef __MOTOR_H
+#define __MOTOR_H
 
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "sys.h"
-#include "delay.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-
 
 
 /* Exported types ------------------------------------------------------------*/
-#define Trig_IO PDout(7)
-#define Echo_IO PCin(6) // 实际中不应该再使用软件轮询
+#define    MOTORON  PAout(2) = 1;
+#define    MOTOROFF PAout(2) = 0;
 
 
 /* Exported constants --------------------------------------------------------*/
-extern uint8_t HC_SR04_start_flag;
-extern uint32_t distance;
-extern uint32_t distance_up;
-extern uint32_t distance_down;
-
-// extern SemaphoreHandle_t xHCSR04Semaphore;
+extern uint8_t motor_falg;
 
 
 /* Exported functions --------------------------------------------------------*/
+void motor_init(void);
 
-void HC_SR04_TIM8_Init(void);
-
-void HC_SR04_Init(void);
-
-uint32_t HC_SR04_Get_Distance(void);
-
-void TIM8_CC_IRQHandler(void);
-
-void HC_SR04_Timer_Tick(void);
+#endif /* __MOTOR_H */
 
 
-#endif /* __HC_SR04_H */
 
 /*****END OF FILE****/
 

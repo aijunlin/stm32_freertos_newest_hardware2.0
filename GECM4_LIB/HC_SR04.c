@@ -25,7 +25,8 @@ static uint8_t cnt = 0;   //静态变量函数退出后值不会变
 
 // SemaphoreHandle_t xHCSR04Semaphore = NULL;
 uint32_t distance;
-
+uint32_t distance_up = 0;
+uint32_t distance_down = 0;
 
 /**
  * @brief  hc_sr04初始化函数

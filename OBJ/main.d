@@ -74,6 +74,7 @@
 ..\obj\main.o: ..\GECM4_LIB\key_timer.h
 ..\obj\main.o: ..\GECM4_LIB\led.h
 ..\obj\main.o: ..\GECM4_LIB\esp8266.h
+..\obj\main.o: ..\GECM4_LIB\motor.h
 ..\obj\main.o: ..\FreeRTOS\include\event_groups.h
 ..\obj\main.o: ..\FreeRTOS\include\timers.h
 ..\obj\main.o: ..\GECM4_LIB\HS0038.h

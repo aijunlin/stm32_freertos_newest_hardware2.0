@@ -20,15 +20,14 @@
 static uint8_t cnt = 0;   //静态变量函数退出后值不会变
 static uint8_t prestate,curstate;
 
+uint8_t key_area_flag = 1;
+uint8_t key_hc05_page_area_flag = 1;
+uint8_t key_motor_page_area_flag = 2;
 
-
-uint8_t key_area_flag = 0;//选择的密码位
 uint8_t key_num;//按键的键位状态
-uint8_t key[4] = {0}; //存放密码的空间
-uint8_t key_user[4] = {1,1,4,5};
-uint8_t dis_range = 10;//反射的最小距离
+
 uint8_t key_page_flag = 0;  //页面切换的标志位
-uint8_t key_area_esp8266 = 0;
+
 /**
  * @brief  key初始化函数
  * @param  None
@@ -126,37 +125,6 @@ void key_Timer_Tick(void)   //每20次时钟调用一次
 	
 }
 
-/**
- * @brief  密码的操作函数
- * @param  None
- * @note   PA0 - key1  PE2 - key2 PE3 - key3 PE4 - key4
- * @retval None
- */
-
-void Key_Key_Word_Page1(void)
-{
-	
-	uint8_t key_num = key_Timer_Callback();	
-
-	switch (key_num)
-	{
-	case KEY_TIMER_KEY1:
-		key[key_area_flag] ++;
-		break;
-	case KEY_TIMER_KEY2:
-		key[key_area_flag] --;
-		break;
-	case KEY_TIMER_KEY3:
-		key_area_flag ++;
-		break;
-	case KEY_TIMER_KEY4:
-		Key_User_Cmp();//密码确认函数
-		break;
-	default:
-		break;
-	}
-
-}
 
 /**
  * @brief  这里是菜单页面的切换函数
@@ -181,12 +149,164 @@ void Key_Key_Word_Pagemenu(void)
 		key_area_flag ++;   			//读取到这里的页面的选项
 		break;
 	case KEY_TIMER_KEY4:
-		key_page_flag = key_area_flag + 2; 		//确认按键  在这里切换页面
+		key_page_flag  = key_area_flag;   			//读取到这里的页面的选项
+        OLED_Clear();
 		break;
 	default:
 		break;
 	}
 
+}
+
+/**
+ * @brief  这里是页面的切换函数
+ * @param  None
+ * @note   PA0 - key1  PE2 - key2 PE3 - key3 PE4 - key4
+ * @retval None
+ */
+void page_switch(void)
+{
+    switch (key_page_flag)
+    {
+    case 0:
+        Key_Timer_page_menuchoose();
+        break;
+    case 1:
+        motor_page_menu();
+        break;
+    case 2:
+        hc05_page_menu();
+        break;
+    default:
+        break;
+    }
+}
+
+
+/**
+ * @brief  这里是HC-05的设置页面函数
+ * @param  None
+ * @note   PA0 - key1  PE2 - key2 PE3 - key3 PE4 - key4
+ * @retval None
+ */
+void hc05_page_menu(void)
+{
+    OLED_ShowChinese(0,0,"当前液位:");
+    OLED_ShowNum(80,0,distance,3,OLED_8X16);
+
+    OLED_ShowChinese(0,16,"液位上预警:");
+    OLED_ShowNum(88,16,distance_up,3,OLED_8X16);
+
+    OLED_ShowChinese(0,32,"液位下预警:");
+    OLED_ShowNum(88,32,distance_down,3,OLED_8X16);
+
+    switch (key_hc05_page_area_flag)
+	{
+    case 1:
+		OLED_ReverseArea(88, 16, 24, 16); 
+		break;
+	case 2:
+		OLED_ReverseArea(88, 32, 24, 16);
+		break;
+
+	default:
+		key_hc05_page_area_flag = 1;
+		break;
+	}
+
+    OLED_Update(); //显存刷新函数
+    Key_hc05_page_Pagemenu();
+}
+
+void Key_hc05_page_Pagemenu(void)
+{
+
+    uint8_t key_num = key_Timer_Callback();
+
+    switch (key_num)
+    {
+    case KEY_TIMER_KEY1:
+        if (key_hc05_page_area_flag == 1)
+        {
+            distance_up += 5;
+        }
+        if (key_hc05_page_area_flag == 2)
+        {
+            distance_down += 5;
+        }
+        break;
+    case KEY_TIMER_KEY2:
+        if (key_hc05_page_area_flag == 1)
+        {
+            distance_up -= 5;
+        }
+        if (key_hc05_page_area_flag == 2)
+        {
+            distance_down -= 5;
+        }
+        break;
+    case KEY_TIMER_KEY3:
+        key_hc05_page_area_flag++; // 读取到这里的页面的选项
+        break;
+    case KEY_TIMER_KEY4:
+        key_page_flag = 0; // 直接返回第一页面
+        OLED_Clear();
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * @brief  这里是电机的手动操作页面函数
+ * @param  None
+ * @note   PA0 - key1  PE2 - key2 PE3 - key3 PE4 - key4
+ * @retval None
+ */
+void motor_page_menu(void)
+{
+    OLED_ShowChinese(0,0,"电机手动操作");
+
+    OLED_ShowChinese(32,16,"开");
+    if (motor_falg == 1)
+    {
+        OLED_ShowNum(80,16,1,1,OLED_8X16);  //显示开
+    }
+    OLED_ShowChinese(32,32,"关");
+    if (motor_falg == 0)
+    {
+        OLED_ShowNum(80,32,1,1,OLED_8X16);  //显示关
+    }
+
+    OLED_Update(); //显存刷新函数
+    Key_motor_page_Pagemenu();
+}
+
+void Key_motor_page_Pagemenu(void)
+{
+
+    uint8_t key_num = key_Timer_Callback();
+
+    switch (key_num)
+    {
+    case KEY_TIMER_KEY1:
+        motor_falg = 1;
+        OLED_ClearArea(80, 8, 8, 40);
+        break;
+    case KEY_TIMER_KEY2:
+        motor_falg = 0;
+        OLED_ClearArea(80, 16, 8, 40);
+        break;
+    case KEY_TIMER_KEY3:
+        break;
+    case KEY_TIMER_KEY4:
+        key_page_flag = 0;  // 直接返回第一页面
+        motor_falg = 0;     //退出直接关闭电机
+        OLED_Clear();
+        break;
+    default:
+        break;
+    }
 }
 
 /*
@@ -218,121 +338,14 @@ void Key_Timer5_Init(void)
 	NVIC_InitTypeDef NVIC_InitStruct;
 	NVIC_InitStruct.NVIC_IRQChannel=TIM5_IRQn;
 	NVIC_InitStruct.NVIC_IRQChannelCmd=ENABLE;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority=0;//抢占
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority=5;//抢占
 	NVIC_InitStruct.NVIC_IRQChannelSubPriority=0;//响应
 	NVIC_Init(&NVIC_InitStruct);
 	
 	TIM_Cmd(TIM5,ENABLE);
 
 }
-/**
- * @brief  这里是菜单页面的切换函数
- * @param  None
- * @note   PA0 - key1  PE2 - key2 PE3 - key3 PE4 - key4
- * @retval None
- */
-void Key_Page_Switch(void)
-{
 
-	switch (key_page_flag)
-	{
-	case 0:
-		Key_Timer_Page1();
-		break;
-	case 1 :
-		Key_Timer_page_menuchoose();
-		key_area_flag = 0; //清除翻转区域的标志位
-		break;
-	case 2 :
-						  //在这里显示温湿度的页面
-		break;
-	case 3 :
-		Key_Timer_page_esp8266();	
-		OLED_Update();
-		key_area_flag = 0;				
-		break;
-	case 4 :
-
-		break;
-
-
-
-	default:
-		break;
-	}
-}
-
-/**
- * @brief  密码页面的输入函数
- * @param  None
- * @note   本页面是密码输入的页面
- * @retval None
- */
-
-void Key_Timer_Page1(void)
-{
-		OLED_ShowChinese(0,0,"请输入密码");	//注意汉字的编码要和文件的编码相同
-		
-		OLED_ShowNum(16,16,key[0],1,OLED_8X16);
-		OLED_ShowNum(32,16,key[1],1,OLED_8X16);
-		OLED_ShowNum(48,16,key[2],1,OLED_8X16);
-		OLED_ShowNum(64,16,key[3],1,OLED_8X16);
-
-		switch (key_area_flag)
-		{
-		case 0:
-			OLED_ReverseArea(16,16,8,16);
-			break;
-		case 1:
-			OLED_ReverseArea(32,16,8,16);
-			break;
-		case 2:
-			OLED_ReverseArea(48,16,8,16);
-			break;
-		case 3:
-			OLED_ReverseArea(64,16,8,16);
-			break;
-		default:
-			if (key_area_flag >= 4)
-			{
-				key_area_flag = 0;
-			}
-			break;
-		}
-
-		//确认切换页面的操作
-
-
-
-		OLED_Update();
-		Key_Key_Word_Page1();	//按键扫描0-4切换函数
-}
-
-void Key_Key_Dis(void)
-{
-	uint8_t key_num = key_Timer_Callback();
-
-	switch (key_num)
-	{
-	case KEY_TIMER_KEY1:
-		dis_range += 5;
-		break;
-	case KEY_TIMER_KEY2:
-		dis_range -= 5;
-		break;
-	case KEY_TIMER_KEY3:
-		
-
-		break;
-	case KEY_TIMER_KEY4:
-		
-
-		break;
-	default:
-		break;
-	}
-
-}
 /**
  * @brief  菜单页面函数
  * @param  None
@@ -343,175 +356,42 @@ void Key_Key_Dis(void)
 
 void Key_Timer_page_menuchoose(void)
 {
-
-	OLED_ShowChinese(0,0,"温湿度数据"); //一个字宽度16
-	// OLED_ShowNum(64,16,dis_range,1,OLED_8X16);	//设置超声波的响应距离的函数
-	OLED_ShowString(0,16,"esp8266",OLED_8X16);
-	OLED_ShowString(0,32,"DHT11",OLED_8X16);
-	OLED_ShowString(0,48,"HC-05",OLED_8X16);
+    OLED_ShowChinese(0,32,"电机手动");     //手动页面可以手动开电机
+	OLED_ShowString(0,48,"HC-05",OLED_8X16);    //超声波页面可以手动切换触发的最高液位和最低液位
 
 
 	switch (key_area_flag)
 	{
-	case 0:
-		OLED_ReverseArea(0, 0, 80, 16);
+    case 1:
+		OLED_ReverseArea(0, 32, 64, 16); 
 		break;
-	case 1:
-		OLED_ReverseArea(0, 16, (sizeof("esp8266")-1)*8, 16); //选择进入然后开始连接网络
-		break;
-	case 2:		
-		OLED_ReverseArea(0, 32, (sizeof("DHT11")-1)*8, 16);
-		break;
-	case 3:
+	case 2:
 		OLED_ReverseArea(0, 48, (sizeof("HC-05")-1)*8, 16);
 		break;
 
 	default:
-		key_area_flag = 0;
+		key_area_flag = 1;
 		break;
 	}
 
 	OLED_Update(); //显存刷新函数
 	Key_Key_Word_Pagemenu();	//按键扫描0-4切换函数
-
-
-
-
 	//在这里做数据上传
 }
 
-void Key_Timer_page_esp8266(void)
-{
-	
-#if 1
-	uint8_t count = 1;
-	if (count == 1)
-	{
-		OLED_Update();
-		count = 0;
-	}
-	
-#endif
-
-	OLED_ShowString(0,0,"esp8266",OLED_8X16); //一个字宽度16
-	if (esp8266.Esp8266_Start_Flag == 1)
-	{
-
-		// OLED_ClearArea(64,0,18,18);
-		OLED_ShowChinese(64,0,"开");
-	}
-	if (esp8266.Esp8266_Start_Flag == 0)
-	{
-		// OLED_ClearArea(64,0,18,18);
-		OLED_ShowChinese(64,0,"关");
-	}
-
-	OLED_ShowChinese(64,48,"退出");
 
 
-	switch (esp8266.Esp8266_Ready_percentage)
-	{
+
+ void TIM5_IRQHandler(void)   //轮循检测   10ms/tick
+ {
+ 	if(TIM_GetITStatus(TIM5,TIM_IT_Update) == SET)
+ 	{
 		
-	case 1:
-			OLED_ShowChinese(0,32,"正在初始化请等待中");
-			OLED_ShowString(0,48,"30%",OLED_8X16);//在这里检测状态来控制进度条，增加标志位
-		break;
-	case 2:
-			OLED_ShowChinese(0,32,"正在初始化请等待中");
-			OLED_ShowString(0,48,"60%",OLED_8X16);//在这里检测状态来控制进度条，增加标志位
-	case 3:
-			OLED_ShowChinese(0,32,"正在初始化请等待中");
-			OLED_ShowString(0,48,"100%",OLED_8X16);//在这里检测状态来控制进度条，增加标志位
-		break;
-	default:
-		break;
-	}
+ 		key_Timer_Tick();	//按键的扫描
 
-	switch (key_area_esp8266)
-	{
-	case 0:
-		OLED_ReverseArea(64,0,16,16);
-		OLED_UpdateArea(64,0,16,16); //显存刷新函数
-		break;
-	case 1:
-		OLED_ReverseArea(64,48,32,16);
-		OLED_UpdateArea(64,48,32,16); //显存刷新函数
-		break;
-	
-	default:
-		key_area_esp8266 = 0;
-		break;
-	}
+ 		TIM_ClearITPendingBit(TIM5,TIM_IT_Update);//定时器中断清除
+ 	}
 
-	OLED_UpdateArea(64,0,18,18); //显存刷新函数
-	Key_esp8266_choose();	//按键扫描0-4切换函数
-	//在这里做数据上传
+ }
 
-}
-
-
-
-/**
- * @brief  这里是菜单页面的切换函数
- * @param  None
- * @note   PA0 - key1  PE2 - key2 PE3 - key3 PE4 - key4
- * @retval None
- */
-void Key_esp8266_choose(void)
-{
-	
-	uint8_t key_num = key_Timer_Callback();	
-
-	switch (key_num)
-	{
-	case KEY_TIMER_KEY3:
-		key_area_esp8266 ++;   			//读取到这里的页面的选项
-		break;
-	case KEY_TIMER_KEY4:
-		if (key_area_esp8266 == 0)    		//在这里做esp8266的标志位处理
-		{
-			esp8266.Esp8266_Ready_Flag = 1;			//开始esp8266的初始化   //在这里再叠加一个快关的标志位，然后把开关的功能完善成功
-			esp8266.Esp8266_Ready_percentage = 1;
-		}
-
-		if (key_area_esp8266 == 1)
-		{
-			key_page_flag = 1;			//选择了退出键
-		}
-		
-		break;
-	default:
-		break;
-	}
-
-}
-
-/**
- * @brief  密码验证的函数
- * @param  None
- * @note   本函数用来验证输入的密码是否正确
- * @retval None
- */
-
-void Key_User_Cmp(void)
-{
-	if (memcmp(key, key_user, sizeof(key_user)) == 0) 	//密码正确
-	{
-		PFout(9)  = 1;
-    	PFout(10) = 1;
-    	PEout(13) = 1;
-    	PEout(14) = 1;
-
-		OLED_Clear();//清除上一页的数据
-		key_page_flag = 1;
-
-		//Key_Timer_Page2();//切换到倒车雷达的配置页面
-
-	}
-	else	//密码错误  //将密码清除
-	{
-		memset(key,0,sizeof(key));
-	}
-	
-}
 

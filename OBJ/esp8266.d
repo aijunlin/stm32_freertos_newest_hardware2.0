@@ -65,6 +65,7 @@
 ..\obj\esp8266.o: ..\GECM4_LIB\key_timer.h
 ..\obj\esp8266.o: ..\GECM4_LIB\led.h
 ..\obj\esp8266.o: ..\GECM4_LIB\esp8266.h
+..\obj\esp8266.o: ..\GECM4_LIB\motor.h
 ..\obj\esp8266.o: ..\GECM4_LIB\HC_SR04.h
 ..\obj\esp8266.o: ..\FreeRTOS\include\semphr.h
 ..\obj\esp8266.o: ..\FreeRTOS\include\queue.h

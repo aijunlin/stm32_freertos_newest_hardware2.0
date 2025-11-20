@@ -23,6 +23,9 @@
         "key_timer.h": "c",
         "cstdint": "c",
         "limits": "c",
-        "stm32f4xx.h": "c"
+        "stm32f4xx.h": "c",
+        "esp8266.h": "c",
+        "string.h": "c",
+        "cmath": "c"
     }
 }

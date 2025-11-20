@@ -431,11 +431,6 @@
               <FilePath>..\GECM4_LIB\led\led.c</FilePath>
             </File>
             <File>
-              <FileName>key.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\GECM4_LIB\key\key.c</FilePath>
-            </File>
-            <File>
               <FileName>OLED_Data.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\GECM4_LIB\OLED_Data.c</FilePath>
@@ -474,6 +469,16 @@
               <FileName>ws2812.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\GECM4_LIB\ws2812.c</FilePath>
+            </File>
+            <File>
+              <FileName>key_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GECM4_LIB\key_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GECM4_LIB\motor.c</FilePath>
             </File>
           </Files>
         </Group>
