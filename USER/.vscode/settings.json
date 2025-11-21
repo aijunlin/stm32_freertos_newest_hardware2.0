@@ -26,6 +26,7 @@
         "stm32f4xx.h": "c",
         "esp8266.h": "c",
         "string.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "cstdio": "c"
     }
 }

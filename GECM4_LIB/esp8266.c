@@ -430,26 +430,22 @@ void esp8266_test_demo(void)
 
 /**
   * @brief  esp8266数据上报函数
-  * @note   该函数调用后每1s向云服务器发送DHT11采集的数据
+  * @note   该函数调用后每1s向云服务器发送本地的数据
+  * 		目前上报的数据有：
+  * 			1. 距离数据
+  * 			2. 电机状态数据
   * @param  
   * @retval 
-  *         
   */
 uint8_t esp8266_DataReport(const char* msg_str)
 {
  	char data[64];
 
-    sprintf(data, "#chat win1 %d", distance); // 拼接温湿度数据进行发送 可以改成json发送
-
-
+    sprintf(data, "#chat win1 %dmotor%ddis1%ddis2%d", distance,motor_falg,distance_up,distance_down);
     ESP8266_SendMsg(data);
 
-
-
-
-
+	return 0;
 }
-
 
 
 void esp8266_Timer_Tick(void)
@@ -473,8 +469,6 @@ void  ESP8266_SendHeartbeat(void)
 
 	ESP8266_SendMsg(HEARTBEAT_MESSAGE);//直接发送心跳包
     taskEXIT_CRITICAL();
-
-
 }
 
 

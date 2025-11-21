@@ -38,6 +38,8 @@
 #include "main.h"
 
 
+#define ESP8266_DEBUG 1
+
 EventGroupHandle_t xESP8266EventGroup = NULL;
 
 
@@ -146,65 +148,66 @@ int main(void)
 		printf("HC_SR04_Task create failed!\r\n");
 		// 可以在这里处理创建失败的情况
 	}
-			
-	// //esp8266的连接任务
-	// xReturned = xTaskCreate(
-	// 						ESP8266_Connect_Task,		// 任务接口函数
-	// 						"ESP8266_Connect_Task",	   // 任务名字
-	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-	// 						NULL,			   // 传递给任务的参数
-	// 						4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-	// 						&ESP8266_Connect_Task_handle // 任务控制块指针
-	// );
+	#if ESP8266_DEBUG	
+	//esp8266的连接任务
+	xReturned = xTaskCreate(
+							ESP8266_Connect_Task,		// 任务接口函数
+							"ESP8266_Connect_Task",	   // 任务名字
+							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&ESP8266_Connect_Task_handle // 任务控制块指针
+	);
 
-	// if( xReturned == pdPASS )						// 创建任务成功
-    // {
-	// 	printf("ESP8266_Connect_Task create!\r\n");
-    // }	
-	// else
-	// {
-	// 	printf("ESP8266_Connect_Task create failed!\r\n");
-	// 	// 可以在这里处理创建失败的情况
-	// }
+	if( xReturned == pdPASS )						// 创建任务成功
+    {
+		printf("ESP8266_Connect_Task create!\r\n");
+    }	
+	else
+	{
+		printf("ESP8266_Connect_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
 
-    // // 3、创建任务，并存储其标识符
-	// xReturned = xTaskCreate(
-	// 						ESP8266_Process_Task,		// 任务接口函数
-	// 						"ESP8266_Process_Task",	   // 任务名字
-	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-	// 						NULL,			   // 传递给任务的参数
-	// 						3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-	// 						&ESP8266_Process_Task_handle // 任务控制块指针
-	// );
+    // 3、创建任务，并存储其标识符
+	xReturned = xTaskCreate(
+							ESP8266_Process_Task,		// 任务接口函数
+							"ESP8266_Process_Task",	   // 任务名字
+							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&ESP8266_Process_Task_handle // 任务控制块指针
+	);
 
-	// if( xReturned == pdPASS )						// 创建任务成功
-    // {
-	// 	printf("ESP8266_Process_Task create!\r\n");
-    // }	
-	// else
-	// {
-	// 	printf("ESP8266_Process_Task create failed!\r\n");
-	// 	// 可以在这里处理创建失败的情况
-	// }
+	if( xReturned == pdPASS )						// 创建任务成功
+    {
+		printf("ESP8266_Process_Task create!\r\n");
+    }	
+	else
+	{
+		printf("ESP8266_Process_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
 
-    // xReturned = xTaskCreate(
-	// 						ESP8266_messagereport_Task,		// 任务接口函数
-	// 						"ESP8266_messagereport_Task",	   // 任务名字
-	// 						512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-	// 						NULL,			   // 传递给任务的参数
-	// 						3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
-	// 						&ESP8266_messagereport_Task_handle // 任务控制块指针
-	// );
+    xReturned = xTaskCreate(
+							ESP8266_messagereport_Task,		// 任务接口函数
+							"ESP8266_messagereport_Task",	   // 任务名字
+							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							5,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&ESP8266_messagereport_Task_handle // 任务控制块指针
+	);
 
-	// if( xReturned == pdPASS )						// 创建任务成功
-    // {
-	// 	printf("ESP8266_messagereport_Task create!\r\n");
-    // }	
-	// else
-	// {
-	// 	printf("ESP8266_messagereport_Task create failed!\r\n");
-	// 	// 可以在这里处理创建失败的情况
-	// }
+	if( xReturned == pdPASS )						// 创建任务成功
+    {
+		printf("ESP8266_messagereport_Task create!\r\n");
+    }	
+	else
+	{
+		printf("ESP8266_messagereport_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
+    #endif
 
 	// (4)、开启任务调度(堵塞于此，让任务可以运行起来)
 	vTaskStartScheduler();			
@@ -220,11 +223,8 @@ int main(void)
 static void OLED_Task(void *pvParameters)
 {
     while (1)
-    {   
-        // OLED_ShowNum(32, 16, distance, 3, OLED_8X16);
-        
+    {           
         page_switch();
-
         // OLED_UpdateArea(32, 16, 24, 16);
         vTaskDelay(pdMS_TO_TICKS(1));
     }
@@ -246,9 +246,19 @@ static void HC_SR04_Task(void *pvParameters)
         temp = HC_SR04_Get_Distance();
         if (temp != -1) 
         {
-            distance = temp;
-            printf("distance: %d cm\r\n", distance);
 
+            distance = (100-temp);
+
+            //自动运行的区域
+            if (distance < distance_down)   //水位过低
+            {
+                motor_falg = 1;             //打开水泵
+            }
+            if (distance > distance_up)    //水位过高
+            {
+                motor_falg = 0;             //关闭水泵
+            }
+            printf("distance: %d cm\r\n", temp);
         }
         vTaskDelay( pdMS_TO_TICKS(1000) ); 
     }
@@ -414,28 +424,45 @@ void ESP8266_Process_Task(void *pvParameters)
                     // *** 核心改动: 收到回声，设置 EventBit 通知连接任务 ***
                     xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_HEARTBEAT_ECHO);
                 }
-                
-                else
+                //接收电机的远程控制命令
+                if (strstr(local_recv_buffer, "motor_on") != NULL)  //找到了
                 {
-                    printf("ESP8266: failed to get mutex, data not processed.\r\n");
+                    motor_falg = 1;
                 }
-
-              
-                if (MY_LIB_CmpArray((int8_t *)local_recv_buffer, (int8_t *)"Green",5) == 0)
+                if (strstr(local_recv_buffer, "motor_off") != NULL)  //找到了
                 {
-                    strcpy(g_rxbuffer, "Green");
+                    motor_falg = 0;
                 }
+                if (strstr(local_recv_buffer, "up") && strstr(local_recv_buffer, "down"))
+                {
+                    uint32_t up_value = 0;
+                    uint32_t down_value = 0;
 
-
+                    // 直接在这里使用sscanf提取数据
+                    if(sscanf(local_recv_buffer, "up%ddown%d", &up_value, &down_value) == 2)
+                    {
+                        distance_up = up_value;
+                        distance_down = down_value;
+                    }
+                    else
+                    {
+                        printf("数据格式不正确，无法提取数值\n");
+                    }
+                }
             }
-        // }
+            // }
 
-        // 延时一段时间，避免过于频繁的处理
-        vTaskDelay(pdMS_TO_TICKS(100));
+            // 延时一段时间，避免过于频繁的处理
+            vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
-
+/**
+  * @brief  ESP8266消息上报任务
+  * @note   负责上报本地的状态
+  * @param  pvParameters: 任务参数
+  * @retval None
+  */
 void ESP8266_messagereport_Task(void *pvParameters)
 {
 
@@ -448,16 +475,16 @@ void ESP8266_messagereport_Task(void *pvParameters)
             printf("ESP8266: begin send message ... \r\n");
 
             // 调用上报函数
-            
-            if (esp8266_DataReport(NULL) == 0) 
-            {
-                printf("ESP8266: message send success!\r\n");
-                xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_SEND_COMPLETE);
-            } 
+            esp8266_DataReport(NULL);
+            // if (esp8266_DataReport(NULL) == 0) 
+            // {
+            //     printf("ESP8266: message send success!\r\n");
+            //     xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_SEND_COMPLETE);
+            // }
             
             // 不需要 vTaskDelay，任务处理完会自动回到 WaitBits 进入阻塞状态
         }
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }
 

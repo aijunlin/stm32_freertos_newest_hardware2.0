@@ -87,7 +87,7 @@ void Key_hc05_page_Pagemenu(void);
 
 void Key_motor_page_Pagemenu(void);
 
-
+void page_switch(void);
 #endif /* __KEY_TIMER_H */
 
 /*****END OF FILE****/
