@@ -17,6 +17,9 @@
 #define OLED_UNFILLED			0
 #define OLED_FILLED				1
 
+// #define OLED_WIDETH			130
+// #define OLED_HEIGHT			8
+
 /*********************参数宏定义*/
 
 

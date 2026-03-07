@@ -94,14 +94,14 @@ uint8_t OLED_DisplayBuf[8][130];
   *           用户需要根据参数传入的值，将SCL置为高电平或者低电平
   *           当参数传入0时，置SCL为低电平，当参数传入1时，置SCL为高电平
   */
-void OLED_W_SCL(uint8_t BitValue)
-{
-	/*根据BitValue的值，将SCL置高电平或者低电平*/
-	PBout(15) = BitValue;
-	// GPIO_WriteBit(GPIOB,GPIO_Pin_8 , (BitAction)BitValue);
-	/*如果单片机速度过快，可在此添加适量延时，以避免超出I2C通信的最大速度*/
-	//...
-}
+// void OLED_W_SCL(uint8_t BitValue)
+// {
+// 	/*根据BitValue的值，将SCL置高电平或者低电平*/
+// 	PEout(8) = BitValue;
+// 	// GPIO_WriteBit(GPIOB,GPIO_Pin_8 , (BitAction)BitValue);
+// 	/*如果单片机速度过快，可在此添加适量延时，以避免超出I2C通信的最大速度*/
+// 	//...
+// }
 
 /**
   * 函    数：OLED写SDA高低电平
@@ -111,13 +111,53 @@ void OLED_W_SCL(uint8_t BitValue)
   *           用户需要根据参数传入的值，将SDA置为高电平或者低电平
   *           当参数传入0时，置SDA为低电平，当参数传入1时，置SDA为高电平
   */
-void OLED_W_SDA(uint8_t BitValue)
+// void OLED_W_SDA(uint8_t BitValue)
+// {
+// 	/*根据BitValue的值，将SDA置高电平或者低电平*/
+// 	PEout(10) = BitValue;
+// 	// GPIO_WriteBit(GPIOB, GPIO_Pin_9, (BitAction)BitValue);
+// 	/*如果单片机速度过快，可在此添加适量延时，以避免超出I2C通信的最大速度*/
+// 	//...
+// }
+
+
+/**
+  * 函    数：OLED硬件I2C初始化
+  * 说    明：替代原有的OLED_GPIO_Init，使用STM32F4标准库配置硬件I2C1
+  */
+void OLED_I2C_Init(void)
 {
-	/*根据BitValue的值，将SDA置高电平或者低电平*/
-	PDout(10) = BitValue;
-	// GPIO_WriteBit(GPIOB, GPIO_Pin_9, (BitAction)BitValue);
-	/*如果单片机速度过快，可在此添加适量延时，以避免超出I2C通信的最大速度*/
-	//...
+    /* 1. 开启时钟 */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);     // 开启I2C1时钟
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);    // 开启GPIOB时钟
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);     // 开启DMA1时钟
+    
+    /* 2. 配置GPIO引脚复用 (STM32F4特有步骤) */
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_I2C1);  // PB8 复用为 I2C1_SCL
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource9, GPIO_AF_I2C1);  // PB9 复用为 I2C1_SDA
+    
+    /* 3. 配置GPIO为复用开漏模式 */
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;             // 复用模式
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;           // 开漏输出 (I2C必须)
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;             // 上拉
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    
+    /* 4. 配置硬件I2C外设 */
+    I2C_InitTypeDef I2C_InitStructure;
+    I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
+    I2C_InitStructure.I2C_ClockSpeed = 400000;               // 100kHz 标准模式，刷新更慢
+    I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
+    I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
+    I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+    I2C_InitStructure.I2C_OwnAddress1 = 0x00;
+    I2C_Init(I2C1, &I2C_InitStructure);
+    
+    /* 5. 使能I2C */
+    I2C_Cmd(I2C1, ENABLE);
 }
 
 /**
@@ -127,33 +167,27 @@ void OLED_W_SDA(uint8_t BitValue)
   * 说    明：当上层函数需要初始化时，此函数会被调用
   *           用户需要将SCL和SDA引脚初始化为开漏模式，并释放引脚
   */
-void OLED_GPIO_Init(void)
-{
+// void OLED_GPIO_Init(void)
+// {
 	
-	/*在初始化前，加入适量延时，待OLED供电稳定*/
-	GPIO_InitTypeDef GPIO_InitStructure;
-	Delay_us(1000);
+// 	/*在初始化前，加入适量延时，待OLED供电稳定*/
+// 	GPIO_InitTypeDef GPIO_InitStructure;
+// 	Delay_us(1000);
+
+// 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-
-
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     // 普通输出模式
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    // 推挽输出
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      // 上拉电阻
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     // 普通输出模式
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
+// 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8|GPIO_Pin_10;
+//     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     // 普通输出模式
+//     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    // 推挽输出
+//     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      // 上拉电阻
+//     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+//     GPIO_Init(GPIOE, &GPIO_InitStructure);
 	
-	/*释放SCL和SDA*/
-	OLED_W_SCL(1);
-	OLED_W_SDA(1);
-}
+// 	/*释放SCL和SDA*/
+// 	OLED_W_SCL(1);
+// 	OLED_W_SDA(1);
+// }
 
 /*********************引脚配置*/
 
@@ -165,70 +199,183 @@ void OLED_GPIO_Init(void)
   * 参    数：无
   * 返 回 值：无
   */
-void OLED_I2C_Start(void)
-{
-	OLED_W_SDA(1);		//释放SDA，确保SDA为高电平
-	OLED_W_SCL(1);		//释放SCL，确保SCL为高电平
-	Delay_us(1);
-	OLED_W_SDA(0);		//在SCL高电平期间，拉低SDA，产生起始信号
-	Delay_us(1);
-	OLED_W_SCL(0);		//起始后把SCL也拉低，即为了占用总线，也为了方便总线时序的拼接
-}
+// void OLED_I2C_Start(void)
+// {
+// 	OLED_W_SDA(1);		//释放SDA，确保SDA为高电平
+// 	OLED_W_SCL(1);		//释放SCL，确保SCL为高电平
+// 	Delay_us(1);
+// 	OLED_W_SDA(0);		//在SCL高电平期间，拉低SDA，产生起始信号
+// 	Delay_us(1);
+// 	OLED_W_SCL(0);		//起始后把SCL也拉低，即为了占用总线，也为了方便总线时序的拼接
+// }
 
 /**
   * 函    数：I2C终止
   * 参    数：无
   * 返 回 值：无
   */
-void OLED_I2C_Stop(void)
-{
-	OLED_W_SDA(0);		//拉低SDA，确保SDA为低电平
-	OLED_W_SCL(1);		//释放SCL，使SCL呈现高电平
-	Delay_us(1);
-	OLED_W_SDA(1);		//在SCL高电平期间，SDA高低结束
-	Delay_us(1);
-}
+// void OLED_I2C_Stop(void)
+// {
+// 	OLED_W_SDA(0);		//拉低SDA，确保SDA为低电平
+// 	OLED_W_SCL(1);		//释放SCL，使SCL呈现高电平
+// 	Delay_us(1);
+// 	OLED_W_SDA(1);		//在SCL高电平期间，SDA高低结束
+// 	Delay_us(1);
+// }
 
 /**
   * 函    数：I2C发送一个字节
   * 参    数：Byte 要发送的一个字节数据，范围：0x00~0xFF
   * 返 回 值：无
   */
-void OLED_I2C_SendByte(uint8_t Byte)
-{
-	uint8_t i;
+// void OLED_I2C_SendByte(uint8_t Byte)
+// {
+// 	uint8_t i;
 	
-	/*循环8次，主机依次发送数据的每一位*/
-	for (i = 0; i < 8; i++)
-	{
-		/*使用掩码的方式取出Byte的指定一位数据并写入到SDA线*/
-		/*两个!的作用是，让所有非零的值变为1*/
-		OLED_W_SDA(!!(Byte & (0x80 >> i)));
-		Delay_us(1);
-		OLED_W_SCL(1);	//释放SCL，从机在SCL高电平期间读取SDA
-		Delay_us(1);
-		OLED_W_SCL(0);	//速度拉低时钟防止下一个数据拉高退出
-		Delay_us(1);
-	}
+// 	/*循环8次，主机依次发送数据的每一位*/
+// 	for (i = 0; i < 8; i++)
+// 	{
+// 		/*使用掩码的方式取出Byte的指定一位数据并写入到SDA线*/
+// 		/*两个!的作用是，让所有非零的值变为1*/
+// 		OLED_W_SDA(!!(Byte & (0x80 >> i)));
+// 		Delay_us(1);
+// 		OLED_W_SCL(1);	//释放SCL，从机在SCL高电平期间读取SDA
+// 		Delay_us(1);
+// 		OLED_W_SCL(0);	//速度拉低时钟防止下一个数据拉高退出
+// 		Delay_us(1);
+// 	}
 	
-	OLED_W_SCL(1);
-	Delay_us(1);
-	OLED_W_SCL(0);		//拉高拉低不处理应答信号
-	Delay_us(1);
-}
+// 	OLED_W_SCL(1);
+// 	Delay_us(1);
+// 	OLED_W_SCL(0);		//拉高拉低不处理应答信号
+// 	Delay_us(1);
+// }
 
+void OLED_WriteData(uint8_t *Data, uint8_t Count)
+{
+    // 1. 等待总线空闲
+    while(I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY));
+
+    // 2. 发送起始信号、地址和控制字 (因为只有3个字节，直接CPU轮询最快)
+    I2C_GenerateSTART(I2C1, ENABLE);
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)); // 等待 EV5
+
+    I2C_Send7bitAddress(I2C1, 0x78, I2C_Direction_Transmitter);
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)); // 等待 EV6
+
+    I2C_SendData(I2C1, 0x40); // 0x40表示接下来全是数据
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTING)); // 等待数据移入移位寄存器
+
+    // 3. 配置并启动 DMA 搬运剩余的图像数据
+    DMA_DeInit(DMA1_Stream6);
+    DMA_InitTypeDef DMA_InitStructure;
+    DMA_InitStructure.DMA_Channel = DMA_Channel_1;                      // I2C1_TX 对应 Channel_1
+    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&I2C1->DR;     // 目的地：I2C1 数据寄存器地址
+    DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)Data;             // 源头：显存数组地址
+    DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;             // 方向：内存到外设
+    DMA_InitStructure.DMA_BufferSize = Count;                           // 传输数量 (默认130)
+    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;    // 外设地址固定
+    DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;             // 内存地址自增 (遍历数组)
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte; 
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+    DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;                       // 单次传输模式
+    DMA_InitStructure.DMA_Priority = DMA_Priority_High;                 // 优先抢占总线
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
+    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+    DMA_Init(DMA1_Stream6, &DMA_InitStructure);
+
+    // 使能 I2C1 的 DMA 发送请求，并开启 DMA
+    I2C_DMACmd(I2C1, ENABLE);      
+    DMA_Cmd(DMA1_Stream6, ENABLE); 
+
+    // 4. 等待 DMA 把数据搬运完毕 
+    // (硬件自动在后台高速搬数据，CPU虽然在这里死等，但耗时已经大幅缩短，且波形无缝隙)
+    while(DMA_GetFlagStatus(DMA1_Stream6, DMA_FLAG_TCIF6) == RESET);
+    DMA_ClearFlag(DMA1_Stream6, DMA_FLAG_TCIF6); // 清除完成标志
+
+    // 5. 等待 I2C 硬件把最后一个字节彻底推到物理引脚上 (BTF标志)
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
+
+    // 6. 产生停止信号，并关闭本次的 DMA 请求
+    I2C_GenerateSTOP(I2C1, ENABLE);
+    I2C_DMACmd(I2C1, DISABLE);     
+}
+// void OLED_WriteData(uint8_t *Data, uint8_t Count)
+// {
+//     uint8_t i;
+    
+//     // 等待总线空闲
+//     while(I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY));
+
+//     // 发送起始信号
+//     I2C_GenerateSTART(I2C1, ENABLE);
+//     while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)); // 等待 EV5
+
+//     // 发送设备地址 (0x78)
+//     I2C_Send7bitAddress(I2C1, 0x78, I2C_Direction_Transmitter);
+//     while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)); // 等待 EV6
+
+//     // 发送控制字节：0x40 表示即将写数据
+//     I2C_SendData(I2C1, 0x40);
+//     while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTING)); // 等待 EV8
+
+//     // 循环发送数组内容
+//     for (i = 0; i < Count; i ++)
+//     {
+//         I2C_SendData(I2C1, Data[i]);
+//         while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTING)); // 等待数据移入移位寄存器
+//     }
+    
+//     // 等待最后一个字节真正发送完成
+//     while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)); // 等待 EV8_2
+
+//     // 发送停止信号
+//     I2C_GenerateSTOP(I2C1, ENABLE);
+// }
 /**
   * 函    数：OLED写命令
   * 参    数：Command 要写入的命令值，范围：0x00~0xFF
   * 返 回 值：无
   */
+// void OLED_WriteCommand(uint8_t Command)
+// {
+// 	OLED_I2C_Start();				//I2C起始
+// 	OLED_I2C_SendByte(0x78);		//发送OLED的I2C从机地址
+// 	OLED_I2C_SendByte(0x00);		//控制字节，给0x00，表示即将写命令
+// 	OLED_I2C_SendByte(Command);		//写入指定的命令
+// 	OLED_I2C_Stop();				//I2C终止
+// }
+
+
+/**
+  * 函    数：OLED写命令 (硬件I2C版)
+  * 参    数：Command 要写入的命令值
+  */
 void OLED_WriteCommand(uint8_t Command)
 {
-	OLED_I2C_Start();				//I2C起始
-	OLED_I2C_SendByte(0x78);		//发送OLED的I2C从机地址
-	OLED_I2C_SendByte(0x00);		//控制字节，给0x00，表示即将写命令
-	OLED_I2C_SendByte(Command);		//写入指定的命令
-	OLED_I2C_Stop();				//I2C终止
+    // 等待总线空闲
+    while(I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY));
+
+    // 发送起始信号
+    I2C_GenerateSTART(I2C1, ENABLE);
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)); // 等待 EV5
+
+    // 发送设备地址 (0x78)
+    I2C_Send7bitAddress(I2C1, 0x78, I2C_Direction_Transmitter);
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)); // 等待 EV6
+
+    // 发送控制字节：0x00 表示即将写命令
+    I2C_SendData(I2C1, 0x00);
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTING)); // 等待 EV8
+
+    // 发送命令内容
+    I2C_SendData(I2C1, Command);
+    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)); // 等待 EV8_2 (发送完成)
+
+    // 发送停止信号
+    I2C_GenerateSTOP(I2C1, ENABLE);
 }
 
 /**
@@ -237,20 +384,20 @@ void OLED_WriteCommand(uint8_t Command)
   * 参    数：Count 要写入数据的数量
   * 返 回 值：无
   */
-void OLED_WriteData(uint8_t *Data, uint8_t Count)
-{
-	uint8_t i;
+// void OLED_WriteData(uint8_t *Data, uint8_t Count)
+// {
+// 	uint8_t i;
 	
-	OLED_I2C_Start();				//I2C起始
-	OLED_I2C_SendByte(0x78);		//发送OLED的I2C从机地址
-	OLED_I2C_SendByte(0x40);		//控制字节，给0x40，表示即将写数据
-	/*循环Count次，进行连续的数据写入*/
-	for (i = 0; i < Count; i ++)
-	{
-		OLED_I2C_SendByte(Data[i]);	//依次发送Data的每一个数据
-	}
-	OLED_I2C_Stop();				//I2C终止
-}
+// 	OLED_I2C_Start();				//I2C起始
+// 	OLED_I2C_SendByte(0x78);		//发送OLED的I2C从机地址
+// 	OLED_I2C_SendByte(0x40);		//控制字节，给0x40，表示即将写数据
+// 	/*循环Count次，进行连续的数据写入*/
+// 	for (i = 0; i < Count; i ++)
+// 	{
+// 		OLED_I2C_SendByte(Data[i]);	//依次发送Data的每一个数据
+// 	}
+// 	OLED_I2C_Stop();				//I2C终止
+// }
 
 /*********************通信协议*/
 
@@ -265,7 +412,8 @@ void OLED_WriteData(uint8_t *Data, uint8_t Count)
   */
 void OLED_Init(void)
 {
-	OLED_GPIO_Init();			//先调用底层的端口初始化
+	// OLED_GPIO_Init();			//先调用底层的端口初始化
+	OLED_I2C_Init();			//再调用底层的I2C初始化
 	
 	/*写入一系列的命令，对OLED进行初始化配置*/
 	OLED_WriteCommand(0xAE);	//设置显示开启/关闭，0xAE关闭，0xAF开启
@@ -309,6 +457,9 @@ void OLED_Init(void)
 	OLED_Clear();				//清空显存数组
 	OLED_Update();				//更新显示，清屏，防止初始化后未显示内容时花屏
 }
+
+
+
 
 /**
   * 函    数：OLED设置显示光标位置

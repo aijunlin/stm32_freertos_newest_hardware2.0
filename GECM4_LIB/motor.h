@@ -33,7 +33,7 @@
 
 
 /* Exported constants --------------------------------------------------------*/
-extern uint8_t motor_falg;
+extern uint8_t motor_flag;
 
 
 /* Exported functions --------------------------------------------------------*/

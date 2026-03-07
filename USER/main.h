@@ -34,17 +34,17 @@
 #include "uart.h"
 #include "delay.h"
 #include "OLED.h"
-#include "dht11.h"
 #include "HC_SR04.h"
 #include "esp8266.h"
 #include "FreeRTOS.h"	// 选编译配置文件，用于汇总所有源文件的编译选择控制。
 #include "task.h"		// 任务相关函数
 #include "semphr.h" 	// 信号量相关函数
 #include "event_groups.h"
-#include "HS0038.h"
+// #include "HS0038.h"
 #include "ADC.h"
-#include "ws2812.h"
+// #include "ws2812.h"
 #include "key_timer.h"
+#include "flash.h"
 
 
 

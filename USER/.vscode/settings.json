@@ -28,5 +28,6 @@
         "string.h": "c",
         "cmath": "c",
         "cstdio": "c"
-    }
+    },
+    "idf.pythonInstallPath": "F:\\app\\Espressif\\tools\\idf-python\\3.11.2\\python.exe"
 }

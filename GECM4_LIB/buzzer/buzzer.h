@@ -29,7 +29,7 @@
 #include "my_reg.h"
 
 // 二、宏定义(函数、变量、常量)
-#define BUZZER(X) (X)?(PFout(8)=1):(PFout(8)=0)
+#define BUZZER(X) (X)?(PAout(7)=1):(PAout(7)=0)
 
 // 三、自定义的数据类型(结构体、联合体、枚举等)
 

@@ -33,6 +33,9 @@
 #include "key.h"
 #include "OLED.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 
 
 /* Exported types ------------------------------------------------------------*/

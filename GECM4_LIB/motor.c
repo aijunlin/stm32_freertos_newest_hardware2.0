@@ -17,7 +17,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "motor.h"
 
-uint8_t motor_falg = 0;
+uint8_t motor_flag = 0;
 
 void motor_init(void)
 {
@@ -25,7 +25,7 @@ void motor_init(void)
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_2;
+    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_4;
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 

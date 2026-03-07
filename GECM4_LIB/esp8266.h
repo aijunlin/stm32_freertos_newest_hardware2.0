@@ -25,9 +25,9 @@
 #include "delay.h"
 #include "uart.h"
 #include "key.h"
-#include "DHT11.h"
 #include "key_timer.h"
 #include "HC_SR04.h"
+#include "motor.h"
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -36,8 +36,8 @@
 
 // 你的ubuntu系统服务器的协议模式、ip地址、端口号
 #define SOCKET_MODE "TCP"
-#define SOCKET_IP   "8.134.121.55"
-#define SOCKET_PORT 50001			
+#define SOCKET_IP   "8.138.8.218"
+#define SOCKET_PORT 50001
 
 
 #define HEARTBEAT_MESSAGE               "#heartbeat\r\n"
@@ -59,6 +59,9 @@ struct esp8266_start
 };
 
 extern struct esp8266_start esp8266;
+
+
+
 
 /* Exported functions --------------------------------------------------------*/
 

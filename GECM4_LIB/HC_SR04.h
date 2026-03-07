@@ -35,8 +35,6 @@
 
 
 /* Exported types ------------------------------------------------------------*/
-#define Trig_IO PDout(7)
-#define Echo_IO PCin(6) // 实际中不应该再使用软件轮询
 
 
 /* Exported constants --------------------------------------------------------*/
@@ -50,17 +48,15 @@ extern uint32_t distance_down;
 
 /* Exported functions --------------------------------------------------------*/
 
-void HC_SR04_TIM8_Init(void);
-
 void HC_SR04_Init(void);
 
 uint32_t HC_SR04_Get_Distance(void);
 
-void TIM8_CC_IRQHandler(void);
+void TIM1_CC_IRQHandler(void);
 
 void HC_SR04_Timer_Tick(void);
 
-
+uint32_t Distance_Filter(uint32_t new_data);
 #endif /* __HC_SR04_H */
 
 /*****END OF FILE****/

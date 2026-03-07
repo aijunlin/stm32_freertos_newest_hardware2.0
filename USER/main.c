@@ -13,12 +13,8 @@
  *	V0.0.1	完成了基本的代码框架
  *
  *
- *	V0.0.4	2-November-2025 完成了esp8266时序控制，完成了相关数据的上报 完成了AT24C02代码的测试，
+ *	V0.0.4	2-November-2025 完成了esp8266时序控制，完成了相关数据的上报
  *							修复了OLED刷新率过低的问题 
- *
- *  V0.0.5	5-November-2025 完成了红外中断的数据转换bug的修复 完成了AT24C02代码的测试 完成了w25q128
- *                          代码的测试，完成了adc代码的移植，完成了rtc的代码的移植	
- *           
  *			                待完成：adc代码的测试 rtc两份代码的测试 bkp内容的整理 flash代码的移植和测试
  *
  * 	V0.1.0  7-November-2025 完成了freertos的代码框架移植，开始进行任务的调度测试
@@ -42,12 +38,13 @@
 
 EventGroupHandle_t xESP8266EventGroup = NULL;
 
-
+SemaphoreHandle_t xHardwareMutex = NULL;
 
 
 // 任务控制块指针(相当于Linux的线程标识符)
 static TaskHandle_t OLED_Task_handle;
 static TaskHandle_t HC_SR04_Task_handle;
+static TaskHandle_t Motor_Task_handle;
 static TaskHandle_t ESP8266_Connect_Task_handle;
 static TaskHandle_t ESP8266_Process_Task_handle;
 static TaskHandle_t ESP8266_messagereport_Task_handle;
@@ -58,32 +55,24 @@ static TaskHandle_t ESP8266_messagereport_Task_handle;
 // 任务函数声明
 static void OLED_Task( void * pvParameters );
 static void HC_SR04_Task( void * pvParameters );
+static void Motor_Task( void * pvParameters );
 static void ESP8266_Connect_Task( void * pvParameters );
 static void ESP8266_Process_Task( void * pvParameters );
 static void ESP8266_messagereport_Task( void * pvParameters );
 
 
 
-
-char data_buffer[10] =  {0};
-
-u8 g_buffer[32] = {0};
-char g_rxbuffer[32] = {0};
-
-
 void Hardware_Init(void)
 {
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);//设置中断的分组为4
     Key_Timer5_Init();//按键定时器初始化
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);//设置中断的分组为4
     key_Timer_Init();//按键初始化
-	Uart_Init();//uart1主要用来打印
-	Uart2_Init();//uart2主要用来接受蓝牙的传送信号
-	LED_Init();
+	Uart_Init();//uart1主要用来打印调试信息
 	BUZZER_Init();//蜂鸣器的初始化
 	OLED_Init();//本地的oled的使用
 	HC_SR04_Init();//超声波传感器用来接受液面的数据
-	Esp8266_Init(115200);//初始化esp8266来发送检的数据
     motor_init();//电机初始化
+	Esp8266_Init(115200);//初始化esp8266来发送检的数据
 }
 
 
@@ -92,18 +81,33 @@ int main(void)
 {
 
 	Hardware_Init();
+
+    Load_Distance_From_Flash();
 	// (1)、相关变量区域
 	BaseType_t xReturned;	// 任务创建函数的返回值
 	
+	// 创建硬件互斥信号量（必须添加）
+	xHardwareMutex = xSemaphoreCreateMutex();
+	if (xHardwareMutex == NULL) {
+		printf("Hardware Mutex create failed!\r\n");
+		while(1); // 互斥信号量创建失败，系统无法继续
+	} else {
+		printf("Hardware Mutex create success!\r\n");
+	}
+
+
 
 	// 创建ESP8266事件组（必须添加）
 	xESP8266EventGroup = xEventGroupCreate();
 	if (xESP8266EventGroup == NULL) {
 		printf("ESP8266 Event Group create failed!\r\n");
 		while(1); // 事件组创建失败，系统无法继续
-	} else {
+	} 
+    else 
+    {
 		printf("ESP8266 Event Group create success!\r\n");
 	}
+
 
 
     // (3)、RTOS任务的创建并开启调度				 
@@ -111,9 +115,9 @@ int main(void)
     xReturned = xTaskCreate(
 								OLED_Task,       	// 任务接口函数
 								"OLED_Task",        // 任务名字
-								512,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+								256,      		 	// 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
 								NULL,    		 	// 传递给任务的参数
-								3,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+								4,					// 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
 								&OLED_Task_handle 	// 任务控制块指针
 						    );  
 
@@ -133,9 +137,9 @@ int main(void)
 	xReturned = xTaskCreate(
 							HC_SR04_Task,		// 任务接口函数
 							"HC_SR04_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							256,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
 							NULL,			   // 传递给任务的参数
-							1,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
 							&HC_SR04_Task_handle // 任务控制块指针
 	);
 
@@ -148,14 +152,38 @@ int main(void)
 		printf("HC_SR04_Task create failed!\r\n");
 		// 可以在这里处理创建失败的情况
 	}
+
+    // 2、创建任务，并存储其标识符
+	xReturned = xTaskCreate(
+							Motor_Task,		// 任务接口函数
+							"Motor_Task",	   // 任务名字
+							128,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			   // 传递给任务的参数
+							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							&Motor_Task_handle // 任务控制块指针
+	);
+
+	if( xReturned == pdPASS )				    // 创建任务成功
+    {
+		printf("Motor_Task create!\r\n");
+    }	
+	else
+	{
+		printf("Motor_Task create failed!\r\n");
+		// 可以在这里处理创建失败的情况
+	}
+
+
+
+
 	#if ESP8266_DEBUG	
 	//esp8266的连接任务
 	xReturned = xTaskCreate(
 							ESP8266_Connect_Task,		// 任务接口函数
 							"ESP8266_Connect_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							256,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
 							NULL,			   // 传递给任务的参数
-							4,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							5,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
 							&ESP8266_Connect_Task_handle // 任务控制块指针
 	);
 
@@ -172,10 +200,10 @@ int main(void)
     // 3、创建任务，并存储其标识符
 	xReturned = xTaskCreate(
 							ESP8266_Process_Task,		// 任务接口函数
-							"ESP8266_Process_Task",	   // 任务名字
-							512,			   // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
-							NULL,			   // 传递给任务的参数
-							3,				   // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
+							"ESP8266_Process_Task",	    // 任务名字
+							256,			            // 任务堆栈的大小(注意：这个大小指字(4字节)，而非字节)
+							NULL,			            // 传递给任务的参数
+						    5,				            // 任务创建时的优先等级(注意：优先级数字小表示任务优先级低(跟stm32相反)、优先级默认上限为 (configMAX_PRIORITIES - 1)。)
 							&ESP8266_Process_Task_handle // 任务控制块指针
 	);
 
@@ -225,8 +253,7 @@ static void OLED_Task(void *pvParameters)
     while (1)
     {           
         page_switch();
-        // OLED_UpdateArea(32, 16, 24, 16);
-        vTaskDelay(pdMS_TO_TICKS(1));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
@@ -239,70 +266,115 @@ static void OLED_Task(void *pvParameters)
   */
 static void HC_SR04_Task(void *pvParameters)
 {
-    uint32_t temp = 0;
+    int32_t temp = 0;
 
     while (1)
     {
-        temp = HC_SR04_Get_Distance();
-        if (temp != -1) 
+        // 尝试获取互斥锁，最多等待 50ms
+        // 如果 50ms 还拿不到（说明 Wi-Fi 卡住了），就放弃这次测距，等下一个周期
+        if (xSemaphoreTake(xHardwareMutex, pdMS_TO_TICKS(50)) == pdTRUE)
         {
-
-            distance = (100-temp);
-
-            //自动运行的区域
-            if (distance < distance_down)   //水位过低
+            // 拿到锁，安全环境，开始测距！
+            temp = HC_SR04_Get_Distance();
+            
+            // 测距完成，立刻释放互斥锁
+            xSemaphoreGive(xHardwareMutex);
+            
+            if (temp != -1) 
             {
-                motor_falg = 1;             //打开水泵
+
+                uint32_t filtered_temp = Distance_Filter(temp);
+
+                distance = (100 - filtered_temp);
+
+                // 自动运行的区域水位控制逻辑
+                if (distance >= 100) distance = 100;
+
+                // 逻辑判断：控制电机和蜂鸣器
+                if (distance <= distance_down) motor_flag = 1;
+                else if (distance >= distance_up) motor_flag = 0;
+
+                if ((distance >= distance_up + 5) || (distance <= distance_down - 5)) BUZZER(ON);
+                else BUZZER(OFF);
+
+                printf("distance: %d cm\r\n", temp);
             }
-            if (distance > distance_up)    //水位过高
-            {
-                motor_falg = 0;             //关闭水泵
-            }
-            printf("distance: %d cm\r\n", temp);
         }
-        vTaskDelay( pdMS_TO_TICKS(1000) ); 
+        else
+        {
+            // 没有拿到锁，打印一条调试信息
+            printf("HC_SR04: wait for Wi-Fi... skip this time.\r\n");
+        }
+        
+        //同样改用 211ms 这种非整数倍节拍
+        vTaskDelay(pdMS_TO_TICKS(211)); 
     }
 }
+/**
+  * @brief  任务2函数实现
+  * @note   实现电机控制
+  * @param  None
+  * @retval None
+  */
+static void Motor_Task(void *pvParameters)
+{
+    while (1)
+    {
+        if (motor_flag == 1)
+        {
+            GPIO_SetBits(GPIOA, GPIO_Pin_4);
+        }
+        else
+        {
+            GPIO_ResetBits(GPIOA, GPIO_Pin_4);
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+
+
 /**
   * @brief  ESP8266连接任务
   * @note   负责WiFi连接和服务器连接，预留消息上报接口
   * @param  pvParameters: 任务参数
   * @retval None
   */
+
 static void ESP8266_Connect_Task(void *pvParameters)
 { 
     uint8_t retry_count = 0;
     const uint8_t max_retry = 3;
-    // static TickType_t xLastHeartbeatTime = 0;
     
     printf("ESP8266 connect task start ... \r\n");
     
     while (1) {
         EventBits_t uxBits = xEventGroupGetBits(xESP8266EventGroup);
         
-        // 错误处理
+        // 1. 错误处理阶段
         if (uxBits & ESP8266_BIT_ERROR) {
             printf("ESP8266: error status, retry after 5s ... \r\n");
-            vTaskDelay(pdMS_TO_TICKS(5000));
+            vTaskDelay(pdMS_TO_TICKS(3000));
             xEventGroupClearBits(xESP8266EventGroup, ESP8266_BIT_ERROR);
             xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_RECONNECT);
             retry_count = 0;
             continue;
         }
         
-        // 重新连接请求
-        if (uxBits & ESP8266_BIT_RECONNECT) {
+        // 2. 重新连接请求阶段
+        if (uxBits & ESP8266_BIT_RECONNECT)
+        {
             printf("ESP8266: begin retry ... \r\n");
-            xEventGroupClearBits(xESP8266EventGroup, 
-                ESP8266_BIT_WIFI_CONNECTED | ESP8266_BIT_SERVER_CONNECTED | ESP8266_BIT_READY);
-            // 继续执行连接流程
+            // 【必须把 ESP8266_BIT_RECONNECT 也加进清除列表里】
+            xEventGroupClearBits(xESP8266EventGroup,
+                                 ESP8266_BIT_WIFI_CONNECTED | ESP8266_BIT_SERVER_CONNECTED | ESP8266_BIT_READY | ESP8266_BIT_RECONNECT);
         }
-        
-        // WiFi连接阶段
+
+        // 3. WiFi 连接阶段
         if (!(uxBits & ESP8266_BIT_WIFI_CONNECTED)) {
             printf("ESP8266: begin link WiFi ... \r\n");
             
-            // 这里调用您的WiFi连接函数
+            // 调用 WiFi 连接函数
             if (ESP8266_OnLineInit() == 0) {
                 printf("ESP8266: WiFi连接成功! \r\n");
                 xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_WIFI_CONNECTED);
@@ -313,19 +385,21 @@ static void ESP8266_Connect_Task(void *pvParameters)
                 if (retry_count >= max_retry) {
                     xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_ERROR);
                 }
-                vTaskDelay(pdMS_TO_TICKS(3000)); // 3秒后重试
+                vTaskDelay(pdMS_TO_TICKS(2000)); // 失败后 2秒重试
             }
         }
-        // 服务器连接阶段
+        // 4. 服务器连接阶段 (前提是 WiFi 已经连上)
         else if (!(uxBits & ESP8266_BIT_SERVER_CONNECTED)) {
             printf("ESP8266: begin link server ... \r\n");
             
-            // 这里调用您的服务器连接函数
+            // 调用服务器连接函数
             if (ESP8266_ConnectMyYunServer("stm32") == 0) {
                 printf("ESP8266: server link success! \r\n");
-                vTaskDelay(pdMS_TO_TICKS(1000)); // 1秒后再继续任务
+                vTaskDelay(pdMS_TO_TICKS(1000)); // 给底层一点缓冲时间
+                
+                // 设置全部就绪标志位
                 xEventGroupSetBits(xESP8266EventGroup, 
-                    ESP8266_BIT_SERVER_CONNECTED | ESP8266_BIT_READY|ESP8266_BIT_SEND_REQUEST);
+                    ESP8266_BIT_SERVER_CONNECTED | ESP8266_BIT_READY | ESP8266_BIT_SEND_REQUEST);
                 retry_count = 0;
                 printf("ESP8266: system ready, can send message! \r\n");
             } else {
@@ -334,50 +408,17 @@ static void ESP8266_Connect_Task(void *pvParameters)
                 if (retry_count >= max_retry) {
                     xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_ERROR);
                 }
-                vTaskDelay(pdMS_TO_TICKS(5000)); // 5秒后重试
+                vTaskDelay(pdMS_TO_TICKS(3000)); // 失败后 3秒重试
             }
-            printf("ESP8266: Connection successful. Sending first heartbeat.\r\n");
-            // ESP8266_SendHeartbeat(); 
-            // xLastHeartbeatTime = xTaskGetTickCount();
         }
-        // 空闲状态 - 连接状态监控
-       else {
-            // 只有当服务器连接成功且系统处于就绪状态时，才执行心跳检查
-            // if (uxBits & ESP8266_BIT_READY) 
-            // {
-            //     TickType_t xCurrentTime = xTaskGetTickCount();
-                
-            //     // 检查是否到达心跳发送时间
-            //     if ((xCurrentTime - xLastHeartbeatTime) > pdMS_TO_TICKS(HEARTBEAT_ECHO_TIMEOUT_MS)) 
-            //     {
-            //         // 1. **检查上次心跳以来是否收到回声确认**
-            //         EventBits_t echo_bit = xEventGroupGetBits(xESP8266EventGroup) & ESP8266_BIT_HEARTBEAT_ECHO;
-                    
-            //         if (echo_bit) {
-            //             // 收到回声，连接健康
-            //             printf("heart beat /ACK success\r\n");
-            //             // 清除回声位，等待下一轮心跳的确认
-            //             xEventGroupClearBits(xESP8266EventGroup, ESP8266_BIT_HEARTBEAT_ECHO);
-            //         } else {
-            //             // 在整个 HEARTBEAT_INTERVAL_MS 周期内未收到回声，连接失败
-            //             printf("heart beat receive error\r\n");
-            //             // 设置重连位，并清除连接状态位，强制任务回到连接阶段
-            //             xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_RECONNECT);
-            //             xEventGroupClearBits(xESP8266EventGroup, 
-            //                 ESP8266_BIT_SERVER_CONNECTED | ESP8266_BIT_READY);
-                        
-            //             // 立即跳过发送步骤，进入下一个循环处理 RECONNECT
-            //             continue;
-            //         }
-            //         // 2. 检查通过，发送新的心跳包
-            //         xLastHeartbeatTime = xCurrentTime; // 立即更新时间戳
-            //         printf("send new heart beat...\r\n");
-            //         ESP8266_SendHeartbeat(); 
-            //     }
-            // } 
+        // 5. 空闲保持阶段 (网络和服务器都已连接)
+        else {
+            // 目前已移除心跳包逻辑。
+            // 只要连接正常，任务会在这里不断循环并执行底部的 vTaskDelay，处于极低功耗的空转状态。
         }
         
-        vTaskDelay(pdMS_TO_TICKS(100)); // 让出CPU
+        // 让出 CPU 资源给其他任务 (如电机控制、超声波测距)
+        vTaskDelay(pdMS_TO_TICKS(100)); 
     }
 }
 
@@ -402,18 +443,16 @@ void ESP8266_Process_Task(void *pvParameters)
             if ((esp8266_transparent_transmission_sta == 1) && (uart3_flag == 1))
             {
 
-                taskENTER_CRITICAL(); // 使用临界区保护全局共享数据的读/写和状态清除
+               vTaskSuspendAll(); // 使用临界区保护全局共享数据的读/写和状态清除
 
                 printf("u3_recvbuf == %s\r\n", uart3_recvbuf);
                 strcpy(local_recv_buffer, (const char *)uart3_recvbuf);
 
                 // 清空相关数据，方便下次接收
                 Uart_DataArray_clear((uint8_t *)uart3_recvbuf, 128);
-                // uart3_count = 0; // 如果是全局变量也需要保护
                 uart3_flag = 0;
-                // uart3_len = 0;   // 如果是全局变量也需要保护
 
-                taskEXIT_CRITICAL();
+               xTaskResumeAll();
 
                 // 4. 解析数据并控制外设
                 // 注意：这里使用局部副本 local_recv_buffer //在这里使用互斥锁保护数据发送
@@ -425,13 +464,13 @@ void ESP8266_Process_Task(void *pvParameters)
                     xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_HEARTBEAT_ECHO);
                 }
                 //接收电机的远程控制命令
-                if (strstr(local_recv_buffer, "motor_on") != NULL)  //找到了
+                if (strstr(local_recv_buffer, "on") != NULL)
                 {
-                    motor_falg = 1;
+                    motor_flag = 1;
                 }
-                if (strstr(local_recv_buffer, "motor_off") != NULL)  //找到了
+                if (strstr(local_recv_buffer, "off") != NULL)
                 {
-                    motor_falg = 0;
+                    motor_flag = 0;
                 }
                 if (strstr(local_recv_buffer, "up") && strstr(local_recv_buffer, "down"))
                 {
@@ -443,6 +482,8 @@ void ESP8266_Process_Task(void *pvParameters)
                     {
                         distance_up = up_value;
                         distance_down = down_value;
+
+                        Save_Distance_To_Flash();
                     }
                     else
                     {
@@ -466,25 +507,31 @@ void ESP8266_Process_Task(void *pvParameters)
 void ESP8266_messagereport_Task(void *pvParameters)
 {
 
-    while (1)
+while (1)
     {
         EventBits_t uxBits = xEventGroupGetBits(xESP8266EventGroup);
 
         if ((uxBits & ESP8266_BIT_READY) != 0 && (uxBits & ESP8266_BIT_SEND_COMPLETE) == 0)
         {
-            printf("ESP8266: begin send message ... \r\n");
+            // 获取互斥锁，最多等待 1000ms。拿到锁才允许操作硬件外设
+            if (xSemaphoreTake(xHardwareMutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+            {
+                printf("ESP8266: begin send message ... \r\n");
 
-            // 调用上报函数
-            esp8266_DataReport(NULL);
-            // if (esp8266_DataReport(NULL) == 0) 
-            // {
-            //     printf("ESP8266: message send success!\r\n");
-            //     xEventGroupSetBits(xESP8266EventGroup, ESP8266_BIT_SEND_COMPLETE);
-            // }
-            
-            // 不需要 vTaskDelay，任务处理完会自动回到 WaitBits 进入阻塞状态
+                // 调用上报函数
+                esp8266_DataReport(NULL);
+                
+                // 【核心细节】：加一点点延时。ESP8266 收到串口指令到射频发送完毕需要时间
+                // 这 50ms 能确保底层射频真正安静下来，不再产生干扰
+                vTaskDelay(pdMS_TO_TICKS(50)); 
+                
+                // 释放互斥锁，允许超声波开始工作
+                xSemaphoreGive(xHardwareMutex);
+            }
         }
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        
+        // 【防周期重合优化】：从 2000 错开，使用如 2011 这样的素数
+        vTaskDelay(pdMS_TO_TICKS(2011)); 
     }
 }
 

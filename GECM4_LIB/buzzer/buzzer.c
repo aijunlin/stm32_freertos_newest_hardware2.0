@@ -18,17 +18,16 @@ void BUZZER_Init(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
 	// 1、使能GPIO片内外设的硬件时钟					// a、开启教室灯的分电闸
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	
 	// 2、配置GPIO片内外设的引脚						// b、装修师傅配置教室灯的电路，使其可以更好的对教室灯进行开关操作
-	GPIO_InitStructure.GPIO_Pin		= GPIO_Pin_8;			// 引脚：第8根引脚
+	GPIO_InitStructure.GPIO_Pin		= GPIO_Pin_7;			// 引脚：第8根引脚
 	GPIO_InitStructure.GPIO_Mode	= GPIO_Mode_OUT;		// 模式：输出模式
 	GPIO_InitStructure.GPIO_Speed   = GPIO_High_Speed;		// 速度：高速(100MHz)
 	GPIO_InitStructure.GPIO_PuPd	= GPIO_PuPd_NOPULL;		// 上下拉：不拉
 	GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;		// 输出类型：推挽输出
-	GPIO_Init(GPIOF, &GPIO_InitStructure);					// 使用该函数，将配置的信息写入到相应的寄存器中
+	GPIO_Init(GPIOA, &GPIO_InitStructure);					// 使用该函数，将配置的信息写入到相应的寄存器中
 
-	
 	// 3、设置GPIO片内外设引脚的高低电平值			// c、可以对教室灯进行开关操作
 	BUZZER(OFF);
 

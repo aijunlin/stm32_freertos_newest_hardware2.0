@@ -67,5 +67,50 @@ void FLASH_ReadData(uint32_t Address, uint8_t *Data_buf, uint16_t len)
 	}
 }
 
+/**
+ * @brief  保存距离参数到 Flash
+ */
+void Save_Distance_To_Flash(void)
+{
+    // 将要保存的数据打包成数组：[0]魔术字, [1]上限, [2]下限
+    uint32_t save_buf[3];
+    save_buf[0] = FLASH_MAGIC_WORD;
+    save_buf[1] = distance_up;
+    save_buf[2] = distance_down;
+    
+    // 【核心安全保护】：擦写Flash会阻塞CPU，必须挂起调度器，防止引发系统异常
+    vTaskSuspendAll();
+    
+    // 调用你原有的写入函数，将 uint32_t 数组强转为 uint8_t* 写入，长度为 12 字节
+    FLASH_WriteData(PARAM_FLASH_SECTOR, PARAM_FLASH_ADDR, (uint8_t*)save_buf, sizeof(save_buf));
+    
+    xTaskResumeAll();
+    printf("Param Saved to Flash! Up:%d, Down:%d\r\n", distance_up, distance_down);
+}
 
+/**
+ * @brief  开机从 Flash 加载距离参数
+ */
+void Load_Distance_From_Flash(void)
+{
+    uint32_t read_buf[3] = {0};
+    
+    // 读取 12 字节数据
+    FLASH_ReadData(PARAM_FLASH_ADDR, (uint8_t*)read_buf, sizeof(read_buf));
+    
+    // 判断魔术字是否匹配。如果匹配，说明之前存过有效数据
+    if (read_buf[0] == FLASH_MAGIC_WORD) 
+    {
+        distance_up   = read_buf[1];
+        distance_down = read_buf[2];
+        printf("Param Loaded from Flash! Up:%d, Down:%d\r\n", distance_up, distance_down);
+    }
+    else
+    {
+        // 如果魔术字不对（比如新板子第一次刷代码），Flash里默认全是 0xFFFFFFFF
+        // 此时使用代码里默认的变量值，并自动进行第一次保存
+        printf("First Boot, Using Default Params.\r\n");
+        Save_Distance_To_Flash();
+    }
+}
 

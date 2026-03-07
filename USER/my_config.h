@@ -61,8 +61,8 @@
 
 
 // 二、宏定义(函数、变量、常量)
-#define ON  1
-#define OFF 0
+#define ON  0
+#define OFF 1
 #define ALL 99
 
 #define ORDER  1 // 顺序

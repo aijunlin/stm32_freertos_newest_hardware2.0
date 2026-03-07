@@ -37,19 +37,14 @@ uint8_t key_page_flag = 0;  //页面切换的标志位
 
 void key_Timer_Init(void)	//按键引脚的初始化
 {
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_0;
+    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9;
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
-    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
 
-    GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.GPIO_Pin = GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4;
-
-    GPIO_Init(GPIOE, &GPIO_InitStruct);
+    GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 
@@ -81,19 +76,22 @@ uint8_t key_Timer_Callback(void)//按键调用的推荐接口
 uint8_t key_Timer_Scan(void)
 {
 	
-	if (PAin(0) == 0)
+	if (PCin(6) == 0)
 	{
+        // printf("key1 pressed\n");
 		return KEY_TIMER_KEY1;
+
 	}
-	if (PEin(2) == 0)
+	if (PCin(7) == 0)
 	{
+        // printf("key2 pressed\n");
 		return KEY_TIMER_KEY2;
 	}
-	if (PEin(3) == 0)
+	if (PCin(8) == 0)
 	{
 		return KEY_TIMER_KEY3;
 	}
-	if (PEin(4) == 0)
+	if (PCin(9) == 0)
 	{
 		return KEY_TIMER_KEY4;
 	}
@@ -191,22 +189,24 @@ void page_switch(void)
  */
 void hc05_page_menu(void)
 {
-    OLED_ShowChinese(0,0,"当前液位:");
-    OLED_ShowNum(80,0,distance,3,OLED_8X16);
+    // OLED_ShowChinese(0,0,"HC-04");
 
-    OLED_ShowChinese(0,16,"液位上预警:");
-    OLED_ShowNum(88,16,distance_up,3,OLED_8X16);
+    OLED_ShowChinese(0,16,"当前液位:");
+    OLED_ShowNum(80,16,distance,3,OLED_8X16);
 
-    OLED_ShowChinese(0,32,"液位下预警:");
-    OLED_ShowNum(88,32,distance_down,3,OLED_8X16);
+    OLED_ShowChinese(0,32,"液位上预警:");
+    OLED_ShowNum(88,32,distance_up,3,OLED_8X16);
+
+    OLED_ShowChinese(0,48,"液位下预警:");
+    OLED_ShowNum(88,48,distance_down,3,OLED_8X16);
 
     switch (key_hc05_page_area_flag)
 	{
     case 1:
-		OLED_ReverseArea(88, 16, 24, 16); 
+		OLED_ReverseArea(88, 32, 24, 16);
 		break;
 	case 2:
-		OLED_ReverseArea(88, 32, 24, 16);
+		OLED_ReverseArea(88, 48, 24, 16);
 		break;
 
 	default:
@@ -250,6 +250,8 @@ void Key_hc05_page_Pagemenu(void)
         break;
     case KEY_TIMER_KEY4:
         key_page_flag = 0; // 直接返回第一页面
+
+        Save_Distance_To_Flash();
         OLED_Clear();
         break;
     default:
@@ -268,12 +270,12 @@ void motor_page_menu(void)
     OLED_ShowChinese(0,0,"电机手动操作");
 
     OLED_ShowChinese(32,16,"开");
-    if (motor_falg == 1)
+    if (motor_flag == 1)
     {
         OLED_ShowNum(80,16,1,1,OLED_8X16);  //显示开
     }
     OLED_ShowChinese(32,32,"关");
-    if (motor_falg == 0)
+    if (motor_flag == 0)
     {
         OLED_ShowNum(80,32,1,1,OLED_8X16);  //显示关
     }
@@ -290,18 +292,18 @@ void Key_motor_page_Pagemenu(void)
     switch (key_num)
     {
     case KEY_TIMER_KEY1:
-        motor_falg = 1;
+        motor_flag = 1;
         OLED_ClearArea(80, 8, 8, 40);
         break;
     case KEY_TIMER_KEY2:
-        motor_falg = 0;
+        motor_flag = 0;
         OLED_ClearArea(80, 16, 8, 40);
         break;
     case KEY_TIMER_KEY3:
         break;
     case KEY_TIMER_KEY4:
         key_page_flag = 0;  // 直接返回第一页面
-        motor_falg = 0;     //退出直接关闭电机
+        motor_flag = 0;     //退出直接关闭电机
         OLED_Clear();
         break;
     default:
@@ -338,8 +340,8 @@ void Key_Timer5_Init(void)
 	NVIC_InitTypeDef NVIC_InitStruct;
 	NVIC_InitStruct.NVIC_IRQChannel=TIM5_IRQn;
 	NVIC_InitStruct.NVIC_IRQChannelCmd=ENABLE;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority=5;//抢占
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority=0;//响应
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority=5;//抢占优先级
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority=0;//响应优先级
 	NVIC_Init(&NVIC_InitStruct);
 	
 	TIM_Cmd(TIM5,ENABLE);
@@ -357,7 +359,7 @@ void Key_Timer5_Init(void)
 void Key_Timer_page_menuchoose(void)
 {
     OLED_ShowChinese(0,32,"电机手动");     //手动页面可以手动开电机
-	OLED_ShowString(0,48,"HC-05",OLED_8X16);    //超声波页面可以手动切换触发的最高液位和最低液位
+	OLED_ShowString(0,48,"HC-SR04",OLED_8X16);    //超声波页面可以手动切换触发的最高液位和最低液位
 
 
 	switch (key_area_flag)
@@ -366,7 +368,7 @@ void Key_Timer_page_menuchoose(void)
 		OLED_ReverseArea(0, 32, 64, 16); 
 		break;
 	case 2:
-		OLED_ReverseArea(0, 48, (sizeof("HC-05")-1)*8, 16);
+		OLED_ReverseArea(0, 48, (sizeof("HC-SR04")-1)*8, 16);
 		break;
 
 	default:

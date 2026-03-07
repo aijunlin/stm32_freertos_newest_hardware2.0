@@ -48,3 +48,13 @@
 ..\obj\uart.o: ..\GECM4_LIB\OLED.h
 ..\obj\uart.o: ..\GECM4_LIB\OLED_Data.h
 ..\obj\uart.o: ..\GECM4_LIB\sys.h
+..\obj\uart.o: ..\FreeRTOS\include\FreeRTOS.h
+..\obj\uart.o: F:\app\keil\ARM\ARMCOMPLIER506\Bin\..\include\stddef.h
+..\obj\uart.o: ..\FreeRTOS\include\FreeRTOSConfig.h
+..\obj\uart.o: ..\FreeRTOS\include\projdefs.h
+..\obj\uart.o: ..\FreeRTOS\include\portable.h
+..\obj\uart.o: ..\FreeRTOS\include\deprecated_definitions.h
+..\obj\uart.o: ..\FreeRTOS\portable\RVDS\ARM_CM4F\portmacro.h
+..\obj\uart.o: ..\FreeRTOS\include\mpu_wrappers.h
+..\obj\uart.o: ..\FreeRTOS\include\task.h
+..\obj\uart.o: ..\FreeRTOS\include\list.h

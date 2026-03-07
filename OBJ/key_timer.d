@@ -62,10 +62,9 @@
 ..\obj\key_timer.o: ..\GECM4_LIB\uart.h
 ..\obj\key_timer.o: ..\GECM4_LIB\key.h
 ..\obj\key_timer.o: ..\GECM4_LIB\pwm.h
-..\obj\key_timer.o: ..\GECM4_LIB\dht11\DHT11.h
-..\obj\key_timer.o: ..\USER\my_reg.h
 ..\obj\key_timer.o: ..\GECM4_LIB\key_timer.h
 ..\obj\key_timer.o: ..\GECM4_LIB\HC_SR04.h
 ..\obj\key_timer.o: ..\FreeRTOS\include\semphr.h
 ..\obj\key_timer.o: ..\FreeRTOS\include\queue.h
 ..\obj\key_timer.o: ..\GECM4_LIB\motor.h
+..\obj\key_timer.o: ..\GECM4_LIB\flash.h

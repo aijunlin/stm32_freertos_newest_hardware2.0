@@ -175,7 +175,7 @@ void Uart2_Init(void)
   * @retval None
   */
 void Uart3_Init(uint32_t baud_rate)
-{
+{？
 	// 0、片内外设信息初始化结构体
 	GPIO_InitTypeDef   GPIO_InitStructure;
 	USART_InitTypeDef  USART_InitStructure;
