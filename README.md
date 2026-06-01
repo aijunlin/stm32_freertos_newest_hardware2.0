@@ -1,1 +1,1 @@
-这是一个使用了freertos和stm32f407的毕业设计
+这是一个使用了freertos和stm32f407的工程
